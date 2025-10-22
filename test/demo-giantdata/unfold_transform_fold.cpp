@@ -1,7 +1,12 @@
 #include "phlex/core/framework_graph.hpp"
+#include "phlex/core/specified_label.hpp"
+#include "phlex/model/fwd.hpp"
+#include "phlex/model/handle.hpp"
 #include "phlex/model/level_id.hpp"
 #include "phlex/model/product_store.hpp"
 #include "phlex/utilities/async_driver.hpp"
+#include "test/demo-giantdata/summed_clamped_waveforms.hpp"
+#include "test/demo-giantdata/waveforms.hpp"
 #include "test/products_for_output.hpp"
 
 #include "test/demo-giantdata/log_record.hpp"
@@ -9,7 +14,7 @@
 #include "test/demo-giantdata/waveform_generator.hpp"
 #include "test/demo-giantdata/waveform_generator_input.hpp"
 
-#include <algorithm>
+#include <cstddef>
 #include <ranges>
 #include <string>
 #include <vector>

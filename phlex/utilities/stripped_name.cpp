@@ -1,6 +1,7 @@
 #include "phlex/utilities/stripped_name.hpp"
 
 #include <regex>
+#include <string>
 
 namespace {
   std::regex const keep_up_to_paren_right_before_function_params{R"((.*\w)\(.*)"};

@@ -24,17 +24,14 @@
 // =======================================================================================
 
 #include "phlex/core/framework_graph.hpp"
-#include "phlex/model/level_id.hpp"
+#include "phlex/core/fwd.hpp"
 #include "phlex/model/product_store.hpp"
 
 #include "catch2/catch_test_macros.hpp"
-#include "fmt/std.h"
-#include "spdlog/spdlog.h"
 
 #include <atomic>
 #include <ranges>
 #include <string>
-#include <vector>
 
 using namespace phlex::experimental;
 

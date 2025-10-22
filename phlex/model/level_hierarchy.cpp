@@ -1,9 +1,15 @@
 #include "phlex/model/level_hierarchy.hpp"
-#include "phlex/model/level_id.hpp"
+#include "phlex/model/fwd.hpp"
 
-#include "fmt/format.h"
-#include "fmt/std.h"
 #include "spdlog/spdlog.h"
+#include <algorithm>
+#include <cstddef>
+#include <fmt/core.h>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace {
   std::string const unnamed{"(unnamed)"};

@@ -1,6 +1,10 @@
 #include "phlex/utilities/hashing.hpp"
 
 #include "boost/functional/hash.hpp"
+#include <boost/container_hash/hash.hpp>
+#include <cstddef>
+#include <functional>
+#include <string>
 
 namespace phlex::experimental {
   std::hash<std::string> const string_hasher{};

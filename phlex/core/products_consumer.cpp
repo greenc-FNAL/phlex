@@ -1,4 +1,13 @@
 #include "phlex/core/products_consumer.hpp"
+#include "phlex/core/consumer.hpp"
+#include "phlex/core/message.hpp"
+#include "phlex/core/specified_label.hpp"
+#include "phlex/model/algorithm_name.hpp"
+#include <cstddef>
+#include <oneapi/tbb/flow_graph.h>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace phlex::experimental {
 

@@ -1,9 +1,12 @@
 #include "phlex/core/framework_graph.hpp"
+#include "phlex/core/specified_label.hpp"
+#include "phlex/model/handle.hpp"
 #include "phlex/model/product_store.hpp"
 
 #include "catch2/catch_test_macros.hpp"
 
 #include <array>
+#include <bits/basic_string.h>
 #include <string>
 #include <tuple>
 

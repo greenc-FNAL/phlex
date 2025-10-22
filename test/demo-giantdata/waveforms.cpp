@@ -1,5 +1,7 @@
 #include "waveforms.hpp"
 #include "log_record.hpp"
+#include <cstddef>
+#include <utility>
 
 std::size_t demo::Waveforms::size() const { return waveforms.size(); }
 

@@ -1,9 +1,18 @@
 #include "phlex/core/declared_unfold.hpp"
-#include "phlex/model/handle.hpp"
+#include "phlex/core/products_consumer.hpp"
+#include "phlex/core/specified_label.hpp"
+#include "phlex/model/algorithm_name.hpp"
+#include "phlex/model/fwd.hpp"
 #include "phlex/model/level_counter.hpp"
 
-#include "fmt/std.h"
+#include "phlex/model/product_store.hpp"
+#include "phlex/model/products.hpp"
 #include "spdlog/spdlog.h"
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace phlex::experimental {
 

@@ -1,13 +1,22 @@
 #include "phlex/core/multiplexer.hpp"
-#include "phlex/model/product_store.hpp"
+#include "phlex/core/fwd.hpp"
+#include "phlex/core/message.hpp"
+#include "phlex/core/specified_label.hpp"
+#include "phlex/model/fwd.hpp"
 
-#include "fmt/std.h"
 #include "oneapi/tbb/flow_graph.h"
 #include "spdlog/spdlog.h"
 
-#include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <fmt/core.h>
+#include <functional>
+#include <iterator>
 #include <ranges>
 #include <stdexcept>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 using namespace std::chrono;
 

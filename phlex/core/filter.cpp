@@ -1,9 +1,13 @@
 #include "phlex/core/filter.hpp"
 #include "phlex/core/declared_output.hpp"
+#include "phlex/core/detail/filter_impl.hpp"
+#include "phlex/core/fwd.hpp"
+#include "phlex/core/message.hpp"
 #include "phlex/core/products_consumer.hpp"
 
-#include "fmt/std.h"
 #include "oneapi/tbb/flow_graph.h"
+#include <cstddef>
+#include <iterator>
 
 using namespace phlex::experimental;
 using namespace oneapi::tbb;

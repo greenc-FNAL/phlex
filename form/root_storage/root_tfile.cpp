@@ -3,6 +3,11 @@
 #include "root_tfile.hpp"
 
 #include "TFile.h"
+#include "storage/storage_file.hpp"
+#include <Compression.h>
+#include <memory>
+#include <stdexcept>
+#include <string>
 
 using namespace form::detail::experimental;
 ROOT_TFileImp::ROOT_TFileImp(std::string const& name, char mode) :

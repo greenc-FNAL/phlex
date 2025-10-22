@@ -6,7 +6,9 @@
 #include "mock_phlex/phlex_toy_config.hpp"
 #include "mock_phlex/phlex_toy_core.hpp" // toy of phlex core components
 
+#include <cstdio>
 #include <iostream> // For cout
+#include <memory>
 #include <vector>
 
 static int const NUMBER_EVENT = 4;

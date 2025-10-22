@@ -1,8 +1,17 @@
 #include "phlex/core/framework_graph.hpp"
+#include "phlex/core/fwd.hpp"
+#include "phlex/core/specified_label.hpp"
 #include "phlex/model/product_store.hpp"
 
 #include "catch2/catch_test_macros.hpp"
 #include "oneapi/tbb/concurrent_vector.h"
+#include <algorithm>
+#include <atomic>
+#include <cstdlib>
+#include <initializer_list>
+#include <iterator>
+#include <ranges>
+#include <vector>
 
 using namespace phlex::experimental;
 using namespace oneapi::tbb;

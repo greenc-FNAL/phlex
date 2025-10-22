@@ -7,12 +7,14 @@
 // phlex command line, or configuration) agrees with what is expected.
 // =======================================================================================
 
+#include "phlex/core/fwd.hpp"
 #include "phlex/model/product_store.hpp"
 #include "phlex/module.hpp"
 #include "phlex/source.hpp"
 #include "phlex/utilities/max_allowed_parallelism.hpp"
 
 #include <cassert>
+#include <cstddef>
 
 using namespace phlex::experimental;
 

@@ -1,9 +1,13 @@
 #include "phlex/model/product_matcher.hpp"
 
-#include "fmt/format.h"
 
+#include <array>
 #include <cassert>
+#include <fmt/core.h>
 #include <regex>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace {
   auto value_or(std::string const& value, std::string const& default_value)

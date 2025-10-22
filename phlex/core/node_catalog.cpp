@@ -1,4 +1,6 @@
 #include "phlex/core/node_catalog.hpp"
+#include <cstddef>
+#include <string>
 
 namespace phlex::experimental {
   std::size_t node_catalog::execution_counts(std::string const& node_name) const

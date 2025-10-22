@@ -29,6 +29,7 @@
 // =======================================================================================
 
 #include "phlex/core/framework_graph.hpp"
+#include "phlex/core/specified_label.hpp"
 #include "phlex/source.hpp"
 #include "test/cached_execution_source.hpp"
 

@@ -1,6 +1,10 @@
 // Copyright (C) 2025 ...
 
 #include "storage_associative_container.hpp"
+#include "storage/istorage.hpp"
+#include "storage/storage_container.hpp"
+#include <memory>
+#include <string>
 
 using namespace form::detail::experimental;
 

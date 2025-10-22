@@ -1,4 +1,6 @@
 #include "phlex/core/end_of_message.hpp"
+#include "phlex/core/fwd.hpp"
+#include "phlex/model/fwd.hpp"
 #include "phlex/model/level_hierarchy.hpp"
 
 namespace phlex::experimental {

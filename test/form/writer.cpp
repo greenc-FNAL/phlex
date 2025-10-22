@@ -7,8 +7,11 @@
 #include "mock_phlex/phlex_toy_core.hpp" // toy of phlex core components
 #include "toy_tracker.hpp"
 
+#include <cstdio>
 #include <cstdlib>  // For rand() and srand()
+#include <ctime>
 #include <iostream> // For cout
+#include <memory>
 #include <vector>
 
 static int const NUMBER_EVENT = 4;

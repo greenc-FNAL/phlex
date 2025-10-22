@@ -1,6 +1,8 @@
 // Copyright (C) 2025 ...
 
 #include "storage_file.hpp"
+#include <stdexcept>
+#include <string>
 
 using namespace form::detail::experimental;
 

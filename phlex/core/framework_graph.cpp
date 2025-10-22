@@ -1,16 +1,25 @@
 #include "phlex/core/framework_graph.hpp"
 
-#include "phlex/concurrency.hpp"
+#include "phlex/core/declared_predicate.hpp"
 #include "phlex/core/edge_maker.hpp"
+#include "phlex/core/filter.hpp"
+#include "phlex/core/fwd.hpp"
+#include "phlex/core/message.hpp"
+#include "phlex/core/message_sender.hpp"
+#include "phlex/model/fwd.hpp"
 #include "phlex/model/level_counter.hpp"
-#include "phlex/model/product_store.hpp"
 
-#include "fmt/std.h"
 #include "spdlog/cfg/env.h"
 #include "spdlog/spdlog.h"
 
 #include <cassert>
-#include <iostream>
+#include <cstddef>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <oneapi/tbb/flow_graph.h>
+#include <stdexcept>
+#include <utility>
 
 namespace phlex::experimental {
   level_sentry::level_sentry(flush_counters& counters,

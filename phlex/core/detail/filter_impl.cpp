@@ -1,7 +1,12 @@
 #include "phlex/core/detail/filter_impl.hpp"
+#include "phlex/core/specified_label.hpp"
+#include "phlex/model/fwd.hpp"
 
 #include <cassert>
+#include <cstddef>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace {
   phlex::experimental::specified_label const output_dummy{phlex::experimental::qualified_name{

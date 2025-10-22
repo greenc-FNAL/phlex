@@ -2,7 +2,9 @@
 
 #include <cassert>
 #include <regex>
+#include <stdexcept>
 #include <tuple>
+#include <utility>
 
 namespace {
   std::regex const algorithm_name_re{R"((\w+)?(:)?(\w+)?)"};

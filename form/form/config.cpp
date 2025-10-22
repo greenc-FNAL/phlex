@@ -1,4 +1,6 @@
 #include "form/config.hpp"
+#include <optional>
+#include <string>
 
 namespace {
   template <class MAP_LIKE>

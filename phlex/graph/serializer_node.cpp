@@ -1,4 +1,6 @@
 #include "phlex/graph/serializer_node.hpp"
+#include <oneapi/tbb/flow_graph.h>
+#include <string>
 
 namespace phlex::experimental {
   serializers::serializers(tbb::flow::graph& g) : graph_{g} {}

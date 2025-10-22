@@ -1,5 +1,7 @@
 #include "phlex/core/framework_graph.hpp"
+#include "phlex/core/fwd.hpp"
 #include "phlex/model/product_store.hpp"
+#include <ranges>
 
 using namespace phlex::experimental;
 

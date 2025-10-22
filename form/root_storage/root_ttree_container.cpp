@@ -3,8 +3,12 @@
 #include "root_ttree_container.hpp"
 #include "root_tfile.hpp"
 
-#include "TFile.h"
 #include "TTree.h"
+#include "storage/istorage.hpp"
+#include "storage/storage_association.hpp"
+#include <memory>
+#include <stdexcept>
+#include <string>
 
 using namespace form::detail::experimental;
 

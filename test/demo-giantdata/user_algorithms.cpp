@@ -2,6 +2,8 @@
 #include "log_record.hpp"
 #include "summed_clamped_waveforms.hpp"
 #include "waveforms.hpp"
+#include <algorithm>
+#include <cstddef>
 
 // This function is used to transform an input Waveforms object into an
 // output Waveforms object. The output is a clamped version of the input.

@@ -1,5 +1,8 @@
 #include "toy_tracker.hpp"
 #include "data_products/track_start.hpp"
+#include <cstdint>
+#include <cstdlib>
+#include <vector>
 
 ToyTracker::ToyTracker(int maxTracks) : m_maxTracks(maxTracks) {}
 

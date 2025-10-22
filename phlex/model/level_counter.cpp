@@ -1,7 +1,14 @@
 #include "phlex/model/level_counter.hpp"
+#include "phlex/model/fwd.hpp"
+#include "phlex/model/level_id.hpp"
 #include "phlex/utilities/hashing.hpp"
 
 #include <cassert>
+#include <cstddef>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <utility>
 
 namespace phlex::experimental {
 

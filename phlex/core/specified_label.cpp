@@ -1,10 +1,13 @@
 #include "phlex/core/specified_label.hpp"
 
-#include "fmt/format.h"
 
+#include <cstddef>
+#include <fmt/core.h>
 #include <ostream>
 #include <stdexcept>
+#include <string>
 #include <tuple>
+#include <utility>
 
 namespace phlex::experimental {
   specified_label specified_label::operator()(std::string family) &&

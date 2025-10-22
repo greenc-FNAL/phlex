@@ -1,9 +1,14 @@
 #include "phlex/core/message_sender.hpp"
 #include "phlex/core/end_of_message.hpp"
+#include "phlex/core/fwd.hpp"
+#include "phlex/core/message.hpp"
 #include "phlex/core/multiplexer.hpp"
-#include "phlex/model/product_store.hpp"
+#include "phlex/model/fwd.hpp"
 
 #include <cassert>
+#include <cstddef>
+#include <stack>
+#include <utility>
 
 namespace phlex::experimental {
   message_sender::message_sender(level_hierarchy& hierarchy,

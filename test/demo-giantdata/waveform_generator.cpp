@@ -4,7 +4,9 @@
 #include "waveform_generator.hpp"
 #include "waveform_generator_input.hpp"
 
+#include <algorithm>
 #include <cstddef>
+#include <utility>
 
 demo::WaveformGenerator::WaveformGenerator(WGI const& wgi) :
   maxsize_{wgi.size}, spill_id_(wgi.spill_id)

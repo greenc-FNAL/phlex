@@ -5,10 +5,18 @@
 #include "root_ttree_container.hpp"
 
 #include "TBranch.h"
-#include "TFile.h"
 #include "TLeaf.h"
 #include "TTree.h"
+#include "storage/istorage.hpp"
+#include "storage/storage_associative_container.hpp"
 
+#include <RtypesCore.h>
+#include <TClass.h>
+#include <TDataType.h>
+#include <TDictionary.h>
+#include <memory>
+#include <stdexcept>
+#include <string>
 #include <unordered_map>
 
 namespace {

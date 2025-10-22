@@ -15,6 +15,7 @@
 // =======================================================================================
 
 #include "phlex/core/framework_graph.hpp"
+#include "phlex/model/handle.hpp"
 #include "phlex/model/level_id.hpp"
 #include "phlex/model/product_store.hpp"
 #include "test/products_for_output.hpp"
@@ -23,7 +24,10 @@
 
 #include <atomic>
 #include <ranges>
+#include <spdlog/spdlog.h>
 #include <string>
+#include <utility>
+#include <vector>
 
 using namespace phlex::experimental;
 

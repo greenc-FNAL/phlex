@@ -2,7 +2,10 @@
 #include "phlex/model/algorithm_name.hpp"
 
 #include <algorithm>
-#include <regex>
+#include <iterator>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace phlex::experimental {
   qualified_name::qualified_name() = default;

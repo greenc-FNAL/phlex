@@ -1,8 +1,14 @@
 #include "phlex/core/framework_graph.hpp"
 
 #include "catch2/catch_test_macros.hpp"
+#include "phlex/core/fwd.hpp"
+#include "phlex/model/product_store.hpp"
 
+#include <functional>
+#include <memory>
 #include <numeric>
+#include <ranges>
+#include <vector>
 
 using namespace phlex::experimental;
 

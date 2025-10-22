@@ -1,4 +1,5 @@
 #include "phlex/core/dot/attributes.hpp"
+#include <string>
 
 namespace {
   std::string maybe_comma(std::string const& result) { return result.empty() ? "" : ", "; }

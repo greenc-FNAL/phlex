@@ -1,7 +1,11 @@
 #include "phlex/model/product_store.hpp"
-#include "phlex/model/level_id.hpp"
+#include "phlex/model/fwd.hpp"
+#include "phlex/model/products.hpp"
 
+#include <cstddef>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <utility>
 
 namespace phlex::experimental {
