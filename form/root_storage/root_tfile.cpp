@@ -46,4 +46,4 @@ void ROOT_TFileImp::setAttribute(std::string const& key, std::string const& valu
   }
 }
 
-std::shared_ptr<TFile> ROOT_TFileImp::getTFile() { return m_file; }
+auto ROOT_TFileImp::getTFile() -> std::shared_ptr<TFile> { return m_file; }

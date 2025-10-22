@@ -29,7 +29,7 @@ namespace phlex::experimental {
     std::function<detail::source_creator_t> create_source;
 
     template <typename creator_t>
-    std::function<creator_t> plugin_loader(std::string const& spec, std::string const& symbol_name)
+    auto plugin_loader(std::string const& spec, std::string const& symbol_name) -> std::function<creator_t>
     {
       char const* plugin_path_ptr = std::getenv("PHLEX_PLUGIN_PATH");
       if (!plugin_path_ptr)
@@ -64,7 +64,7 @@ namespace phlex::experimental {
     creator(module_proxy, config);
   }
 
-  detail::next_store_t load_source(boost::json::object const& raw_config)
+  auto load_source(boost::json::object const& raw_config) -> detail::next_store_t
   {
     configuration const config{raw_config};
     auto const& spec = config.get<std::string>("plugin");

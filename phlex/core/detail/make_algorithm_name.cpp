@@ -5,7 +5,7 @@
 #include <utility>
 
 namespace phlex::experimental::detail {
-  algorithm_name make_algorithm_name(configuration const* config, std::string name)
+  auto make_algorithm_name(configuration const* config, std::string name) -> algorithm_name
   {
     return {config ? config->get<std::string>("module_label") : "", std::move(name)};
   }

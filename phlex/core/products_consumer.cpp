@@ -20,12 +20,12 @@ namespace phlex::experimental {
 
   products_consumer::~products_consumer() = default;
 
-  std::size_t products_consumer::num_inputs() const { return input().size(); }
+  auto products_consumer::num_inputs() const -> std::size_t { return input().size(); }
 
-  tbb::flow::receiver<message>& products_consumer::port(specified_label const& product_label)
+  auto products_consumer::port(specified_label const& product_label) -> tbb::flow::receiver<message>&
   {
     return port_for(product_label);
   }
 
-  specified_labels const& products_consumer::input() const noexcept { return input_products_; }
+  auto products_consumer::input() const noexcept -> specified_labels const& { return input_products_; }
 }

@@ -8,8 +8,8 @@
 #include <string>
 
 namespace phlex::experimental {
-  edge_creation_policy::named_output_port const* edge_creation_policy::find_producer(
-    qualified_name const& specified_product_name) const
+  auto edge_creation_policy::find_producer(
+    qualified_name const& specified_product_name) const -> edge_creation_policy::named_output_port const*
   {
     auto [b, e] = producers_.equal_range(specified_product_name.name());
     if (b == e) {

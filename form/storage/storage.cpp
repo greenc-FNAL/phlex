@@ -18,7 +18,7 @@ using namespace form::detail::experimental;
 
 // Factory function implementation
 namespace form::detail::experimental {
-  std::unique_ptr<IStorage> createStorage() { return std::unique_ptr<IStorage>(new Storage()); }
+  auto createStorage() -> std::unique_ptr<IStorage> { return std::unique_ptr<IStorage>(new Storage()); }
 }
 
 void Storage::createContainers(std::map<std::unique_ptr<Placement>, std::string> const& containers,
@@ -91,9 +91,9 @@ void Storage::commitContainers(Placement const& plcmnt)
   return;
 }
 
-int Storage::getIndex(Token const& token,
+auto Storage::getIndex(Token const& token,
                       std::string const& id,
-                      form::experimental::config::tech_setting_config const& settings)
+                      form::experimental::config::tech_setting_config const& settings) -> int
 {
   if (m_indexMaps[token.containerName()].empty()) {
     auto key = std::make_pair(token.fileName(), token.containerName());

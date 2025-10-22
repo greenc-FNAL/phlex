@@ -52,7 +52,7 @@ void ROOT_TBranch_ContainerImp::setAttribute(std::string const& key, std::string
 void ROOT_TBranch_ContainerImp::setFile(std::shared_ptr<IStorage_File> file)
 {
   this->Storage_Associative_Container::setFile(file);
-  ROOT_TFileImp* root_tfile_imp = dynamic_cast<ROOT_TFileImp*>(file.get());
+  auto* root_tfile_imp = dynamic_cast<ROOT_TFileImp*>(file.get());
   if (root_tfile_imp == nullptr) {
     throw std::runtime_error("ROOT_TBranch_ContainerImp::setFile can't attach to non-ROOT file");
   }
@@ -63,7 +63,7 @@ void ROOT_TBranch_ContainerImp::setFile(std::shared_ptr<IStorage_File> file)
 void ROOT_TBranch_ContainerImp::setParent(std::shared_ptr<IStorage_Container> parent)
 {
   this->Storage_Associative_Container::setParent(parent);
-  ROOT_TTree_ContainerImp* root_ttree_imp = dynamic_cast<ROOT_TTree_ContainerImp*>(parent.get());
+  auto* root_ttree_imp = dynamic_cast<ROOT_TTree_ContainerImp*>(parent.get());
   if (root_ttree_imp == nullptr) {
     throw std::runtime_error("ROOT_TBranch_ContainerImp::setParent");
   }
@@ -125,7 +125,7 @@ void ROOT_TBranch_ContainerImp::commit()
   return;
 }
 
-bool ROOT_TBranch_ContainerImp::read(int id, void const** data, std::string& type)
+auto ROOT_TBranch_ContainerImp::read(int id, void const** data, std::string& type) -> bool
 {
   if (m_tfile == nullptr) {
     throw std::runtime_error("ROOT_TBranch_ContainerImp::read no file attached");

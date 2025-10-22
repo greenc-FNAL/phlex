@@ -57,7 +57,7 @@ namespace phlex::experimental {
   {
   }
 
-  std::string product_matcher::encode() const
+  auto product_matcher::encode() const -> std::string
   {
     return fmt::format("{}/{}@{}:{}", level_path_, module_name_, node_name_, product_name_);
   }

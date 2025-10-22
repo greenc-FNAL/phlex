@@ -23,8 +23,8 @@ demo::WaveformGeneratorInput::WaveformGeneratorInput(WaveformGeneratorInput&& ot
   log_record("wgimove", run_id, subrun_id, spill_id, -1, this, mysize(*this), &other);
 }
 
-demo::WaveformGeneratorInput& demo::WaveformGeneratorInput::operator=(
-  WaveformGeneratorInput const& other)
+auto demo::WaveformGeneratorInput::operator=(
+  WaveformGeneratorInput const& other) -> demo::WaveformGeneratorInput&
 {
   log_record("wgicopy=", run_id, subrun_id, spill_id, -1, this, 0, &other);
   size = other.size;
@@ -32,8 +32,8 @@ demo::WaveformGeneratorInput& demo::WaveformGeneratorInput::operator=(
   return *this;
 }
 
-demo::WaveformGeneratorInput& demo::WaveformGeneratorInput::operator=(
-  WaveformGeneratorInput&& other)
+auto demo::WaveformGeneratorInput::operator=(
+  WaveformGeneratorInput&& other) -> demo::WaveformGeneratorInput&
 {
   log_record("wgimove=", run_id, subrun_id, spill_id, -1, this, 0, &other);
   size = other.size;

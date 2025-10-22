@@ -31,7 +31,7 @@ void levels_to_process(async_driver<level_id_ptr>& d)
   }
 }
 
-int main()
+auto main() -> int
 {
   async_driver<level_id_ptr> drive{levels_to_process};
   tbb::flow::graph g{};

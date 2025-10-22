@@ -15,7 +15,7 @@ namespace {
   auto square_numbers(std::vector<unsigned> const& numbers)
   {
     std::vector<unsigned> result(size(numbers));
-    std::transform(begin(numbers), end(numbers), begin(result), [](unsigned i) { return i * i; });
+    std::ranges::transform(numbers, begin(result), [](unsigned i) -> unsigned int { return i * i; });
     return result;
   }
 
@@ -26,14 +26,14 @@ namespace {
     return std::accumulate(begin(squared_numbers), end(squared_numbers), 0u);
   }
 
-  double sqrt_sum_numbers(unsigned summed_numbers, unsigned offset)
+  auto sqrt_sum_numbers(unsigned summed_numbers, unsigned offset) -> double
   {
     CHECK(summed_numbers == 30u);
     return std::sqrt(static_cast<double>(summed_numbers + offset));
   }
 
   struct A {
-    auto sqrt_sum(unsigned summed_numbers, unsigned offset) const
+    [[nodiscard]] auto sqrt_sum(unsigned summed_numbers, unsigned offset) const
     {
       return sqrt_sum_numbers(summed_numbers, offset);
     }
@@ -75,6 +75,6 @@ TEST_CASE("Call multiple functions", "[programming model]")
   }
 
   // The following is invoked for *each* section above
-  g.observe("verify_result", [](double actual) { assert(actual == 6.); }).input_family("result");
+  g.observe("verify_result", [](double actual) -> void { assert(actual == 6.); }).input_family("result");
   g.execute();
 }

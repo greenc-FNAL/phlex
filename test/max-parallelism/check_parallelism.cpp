@@ -35,7 +35,7 @@ PHLEX_EXPERIMENTAL_REGISTER_SOURCE(send_parallelism)
 PHLEX_EXPERIMENTAL_REGISTER_ALGORITHMS(m, config)
 {
   m.observe("verify_expected",
-            [expected = config.get<std::size_t>("expected_parallelism")](std::size_t actual) {
+            [expected = config.get<std::size_t>("expected_parallelism")](std::size_t actual) -> void {
               assert(actual == expected);
             })
     .input_family("max_parallelism");

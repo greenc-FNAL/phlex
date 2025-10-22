@@ -4,7 +4,7 @@
 #include <memory>
 
 namespace mock_phlex {
-  std::shared_ptr<product_type_names> createTypeMap()
+  auto createTypeMap() -> std::shared_ptr<product_type_names>
   {
     return std::make_shared<product_type_names>();
   }

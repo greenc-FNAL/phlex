@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace phlex::experimental::detail {
-  std::optional<std::vector<std::string>> maybe_predicates(configuration const* config)
+  auto maybe_predicates(configuration const* config) -> std::optional<std::vector<std::string>>
   {
     return config->get_if_present<std::vector<std::string>>("when");
   }

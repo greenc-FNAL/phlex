@@ -27,7 +27,7 @@ namespace phlex::experimental {
   {
   }
 
-  tbb::flow::receiver<message>& declared_output::port() noexcept { return node_; }
+  auto declared_output::port() noexcept -> tbb::flow::receiver<message>& { return node_; }
 
   output_creator::output_creator(registrar<declared_output_ptr> reg,
                                  configuration const* config,
@@ -42,7 +42,7 @@ namespace phlex::experimental {
     concurrency_{c},
     reg_{std::move(reg)}
   {
-    reg_.set_creator([this](auto) { return create(); });
+    reg_.set_creator([this](auto) -> auto { return create(); });
   }
 
 }

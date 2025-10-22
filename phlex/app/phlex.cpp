@@ -22,7 +22,7 @@ using namespace std::string_literals;
 using namespace boost;
 namespace bpo = boost::program_options;
 
-int main(int argc, char* argv[])
+auto main(int argc, char* argv[]) -> int
 {
   std::ostringstream descstr;
   descstr << "\nUsage: " << std::filesystem::path(argv[0]).filename().native()

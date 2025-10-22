@@ -25,7 +25,7 @@ namespace phlex::experimental {
   level_sentry::level_sentry(flush_counters& counters,
                              message_sender& sender,
                              product_store_ptr store) :
-    counters_{counters}, sender_{sender}, store_{store}, depth_{store_->id()->depth()}
+    counters_{counters}, sender_{sender}, store_{std::move(store)}, depth_{store_->id()->depth()}
   {
     counters_.update(store_->id());
   }
@@ -41,10 +41,10 @@ namespace phlex::experimental {
     sender_.send_flush(std::move(flush_store));
   }
 
-  std::size_t level_sentry::depth() const noexcept { return depth_; }
+  auto level_sentry::depth() const noexcept -> std::size_t { return depth_; }
 
   framework_graph::framework_graph(product_store_ptr store, int const max_parallelism) :
-    framework_graph{[store](framework_driver& driver) { driver.yield(store); }, max_parallelism}
+    framework_graph{[store](framework_driver& driver) -> void { driver.yield(store); }, max_parallelism}
   {
   }
 
@@ -84,12 +84,12 @@ namespace phlex::experimental {
 
   framework_graph::~framework_graph() = default;
 
-  std::size_t framework_graph::execution_counts(std::string const& node_name) const
+  auto framework_graph::execution_counts(std::string const& node_name) const -> std::size_t
   {
     return nodes_.execution_counts(node_name);
   }
 
-  std::size_t framework_graph::product_counts(std::string const& node_name) const
+  auto framework_graph::product_counts(std::string const& node_name) const -> std::size_t
   {
     return nodes_.product_counts(node_name);
   }
@@ -156,11 +156,11 @@ namespace phlex::experimental {
                multiplexer_,
                filters_,
                nodes_.outputs,
-               consumers{nodes_.predicates, {.shape = "box"}},
-               consumers{nodes_.observers, {.shape = "box"}},
-               consumers{nodes_.folds, {.shape = "invtrapezium"}},
-               consumers{nodes_.unfolds, {.shape = "trapezium"}},
-               consumers{nodes_.transforms, {.shape = "box"}});
+               consumers{.data=nodes_.predicates, .attributes={.shape = "box"}},
+               consumers{.data=nodes_.observers, .attributes={.shape = "box"}},
+               consumers{.data=nodes_.folds, .attributes={.shape = "invtrapezium"}},
+               consumers{.data=nodes_.unfolds, .attributes={.shape = "trapezium"}},
+               consumers{.data=nodes_.transforms, .attributes={.shape = "box"}});
 
     if (auto data_graph = make_edges.release_data_graph()) {
       data_graph->to_file(dot_file_prefix);
@@ -170,7 +170,7 @@ namespace phlex::experimental {
     }
   }
 
-  product_store_ptr framework_graph::accept(product_store_ptr store)
+  auto framework_graph::accept(product_store_ptr store) -> product_store_ptr
   {
     assert(store);
     auto const new_depth = store->id()->depth();

@@ -5,7 +5,7 @@
 namespace phlex::experimental {
   serializers::serializers(tbb::flow::graph& g) : graph_{g} {}
 
-  serializer_node& serializers::get(std::string const& name)
+  auto serializers::get(std::string const& name) -> serializer_node&
   {
     return serializers_.try_emplace(name, serializer_node{graph_, name}).first->second;
   }

@@ -43,7 +43,7 @@ TEST_CASE("Counter multiple layers deep", "[data model]")
   flush_counters counters;
 
   // Notice the wholesale capture by reference--generally a lazy way of doing things.
-  auto check_all_processed = [&] {
+  auto check_all_processed = [&] -> void {
     CHECK(h.count_for("job") == processed_jobs);
     CHECK(h.count_for("run") == processed_runs);
     CHECK(h.count_for("subrun") == processed_subruns);

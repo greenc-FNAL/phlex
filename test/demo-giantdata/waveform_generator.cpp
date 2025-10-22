@@ -19,9 +19,9 @@ demo::WaveformGenerator::~WaveformGenerator()
   log_record("wgdtor", -1, -1, spill_id_, -1, this, sizeof(*this), nullptr);
 }
 
-std::size_t demo::WaveformGenerator::initial_value() const { return 0; }
+auto demo::WaveformGenerator::initial_value() const -> std::size_t { return 0; }
 
-bool demo::WaveformGenerator::predicate(std::size_t made_so_far) const
+auto demo::WaveformGenerator::predicate(std::size_t made_so_far) const -> bool
 {
   log_record("start_pred", -1, -1, spill_id_, -1, this, made_so_far, nullptr);
   bool const result = made_so_far < maxsize_;
@@ -29,8 +29,8 @@ bool demo::WaveformGenerator::predicate(std::size_t made_so_far) const
   return result;
 }
 
-std::pair<std::size_t, demo::Waveforms> demo::WaveformGenerator::op(std::size_t made_so_far,
-                                                                    std::size_t chunksize) const
+auto demo::WaveformGenerator::op(std::size_t made_so_far,
+                                                                    std::size_t chunksize) const -> std::pair<std::size_t, demo::Waveforms>
 {
   // How many waveforms should go into this chunk?
   log_record("start_op", -1, -1, spill_id_, -1, this, chunksize, nullptr);

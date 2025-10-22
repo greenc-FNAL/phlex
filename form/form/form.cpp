@@ -17,7 +17,7 @@ namespace form::experimental {
   // Accept and store config
   form_interface::form_interface(std::shared_ptr<mock_phlex::product_type_names> tm,
                                  mock_phlex::config::parse_config const& config) :
-    m_pers(nullptr), m_type_map(tm)
+    m_pers(nullptr), m_type_map(std::move(tm))
   {
     // Convert phlex config to form config
     form::experimental::config::output_item_config output_items;

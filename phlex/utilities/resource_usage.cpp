@@ -20,7 +20,7 @@ namespace {
     double max_rss;
   };
 
-  metrics get_rusage() noexcept
+  auto get_rusage() noexcept -> metrics
   {
     rusage used;
     getrusage(RUSAGE_SELF, &used);

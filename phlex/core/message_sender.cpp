@@ -18,7 +18,7 @@ namespace phlex::experimental {
   {
   }
 
-  message message_sender::make_message(product_store_ptr store)
+  auto message_sender::make_message(product_store_ptr store) -> message
   {
     assert(store);
     assert(not store->is_flush());
@@ -31,7 +31,7 @@ namespace phlex::experimental {
     } else {
       current_eom = eoms_.emplace(parent_eom->make_child(store->id()));
     }
-    return {store, current_eom, message_id, -1ull};
+    return {.store=store, .eom=current_eom, .id=message_id, .original_id=-1ull};
   }
 
   void message_sender::send_flush(product_store_ptr store)
@@ -39,11 +39,11 @@ namespace phlex::experimental {
     assert(store);
     assert(store->is_flush());
     auto const message_id = ++calls_;
-    message const msg{store, nullptr, message_id, original_message_id(store)};
+    message const msg{.store=store, .eom=nullptr, .id=message_id, .original_id=original_message_id(store)};
     multiplexer_.try_put(std::move(msg));
   }
 
-  std::size_t message_sender::original_message_id(product_store_ptr const& store)
+  auto message_sender::original_message_id(product_store_ptr const& store) -> std::size_t
   {
     assert(store);
     assert(store->is_flush());

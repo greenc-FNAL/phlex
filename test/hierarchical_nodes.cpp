@@ -68,9 +68,9 @@ namespace {
     std::atomic<unsigned int> number;
   };
 
-  data_for_rms send(threadsafe_data_for_rms const& data)
+  auto send(threadsafe_data_for_rms const& data) -> data_for_rms
   {
-    return {phlex::experimental::send(data.total), phlex::experimental::send(data.number)};
+    return {.total=phlex::experimental::send(data.total), .number=phlex::experimental::send(data.number)};
   }
 
   void add(threadsafe_data_for_rms& redata, unsigned squared_number)
@@ -79,12 +79,12 @@ namespace {
     ++redata.number;
   }
 
-  double scale(data_for_rms data)
+  auto scale(data_for_rms data) -> double
   {
     return std::sqrt(static_cast<double>(data.total) / data.number);
   }
 
-  std::string strtime(std::time_t tm)
+  auto strtime(std::time_t tm) -> std::string
   {
     char buffer[32];
     std::strncpy(buffer, std::ctime(&tm), 26);

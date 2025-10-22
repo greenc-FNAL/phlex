@@ -25,14 +25,14 @@ namespace phlex::experimental {
   {
   }
 
-  product_store_const_ptr generator::make_child(std::size_t const i, products new_products)
+  auto generator::make_child(std::size_t const i, products new_products) -> product_store_const_ptr
   {
     auto child = parent_->make_child(i, new_level_name_, node_name_, std::move(new_products));
     ++child_counts_[child->id()->level_hash()];
     return child;
   }
 
-  product_store_const_ptr generator::flush_store() const
+  auto generator::flush_store() const -> product_store_const_ptr
   {
     auto result = parent_->make_flush();
     if (not child_counts_.empty()) {
