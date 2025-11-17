@@ -8,6 +8,15 @@ on:
   issue_comment:
     types: [created]
   workflow_dispatch:
+    inputs:
+      compiler:
+        description: 'Compiler to use (gcc or clang)'
+        required: false
+        default: ''
+      sanitizer:
+        description: 'Sanitizer to use (none, asan, or tsan)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -86,9 +95,24 @@ jobs:
         fi > >(tee -a $GITHUB_OUTPUT)
 
   build:
+    name: Build and Test (${{ matrix.compiler }}, ${{ matrix.sanitizer }})
     needs: detect-build-changes
-    if: needs.detect-build-changes.outputs.triggered == 'true' && (github.event_name == 'workflow_dispatch' || github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER')
+    if: needs.detect-build-changes.outputs.triggered == 'true' && (github.event_name == 'workflow_dispatch' || github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') &&
+      (github.event_name != 'push' && github.event_name != 'pull_request' ||
+       matrix.compiler != 'clang' || matrix.sanitizer != 'none') &&
+      (github.event_name != 'push' && github.event_name != 'pull_request' ||
+       matrix.compiler != 'clang' || matrix.sanitizer != 'tsan')
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        sanitizer: [none, asan, tsan]
+        exclude:
+          - compiler: clang
+            sanitizer: none
+          - compiler: clang
+            sanitizer: tsan
 
     container:
       image: ghcr.io/framework-r-d/phlex-ci:latest
@@ -120,10 +144,14 @@ jobs:
       uses: Framework-R-D/phlex/.github/actions/setup-build-env@main
 
     - name: Configure CMake
+      id: configure
       uses: Framework-R-D/phlex/.github/actions/configure-cmake@main
       with:
         build-type: ${{ env.BUILD_TYPE }}
-        cpp-compiler: g++
+        cpp-compiler: ${{ matrix.compiler == 'gcc' && 'g++' || 'clang++' }}
+        extra-options: |
+          ${{ matrix.sanitizer == 'asan' && '-DPHLEX_ENABLE_ASAN=ON' || '' }}
+          ${{ matrix.sanitizer == 'tsan' && '-DPHLEX_ENABLE_TSAN=ON' || '' }}
 
     - name: Build
       uses: Framework-R-D/phlex/.github/actions/build-cmake@main
