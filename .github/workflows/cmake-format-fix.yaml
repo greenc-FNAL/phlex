@@ -47,8 +47,8 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: phlex-src
-          ref: ${{ needs.check.outputs.ref_name }}
-          repository: ${{ needs.check.outputs.repo_name }}
+          ref: ${{ steps.get_pr_info.outputs.ref_name }}
+          repository: ${{ steps.get_pr_info.outputs.repo_name }}
           token: ${{ secrets.WORKFLOW_PAT }}
 
       - name: Set up Python

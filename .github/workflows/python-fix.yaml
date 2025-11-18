@@ -1,20 +1,19 @@
-name: Clang-Format Fix
-run-name: "${{ github.actor }} fixing code format"
+name: Python Fix
+run-name: "${{ github.actor }} fixing Python code"
 
 on:
   issue_comment:
     types:
       - created
 
-permissions:
-  pull-requests: write
-  contents: write
-
 jobs:
   check:
     runs-on: ubuntu-latest
     name: Check for phlexbot token
-    if: ${{ github.event.issue.pull_request }}
+    if: ${{ github.event.issue.pull_request && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') }}
+    permissions:
+      contents: read
+      pull-requests: read
 
     outputs:
       match_result: ${{ steps.check_comment.outputs.match_result }}
@@ -25,7 +24,7 @@ jobs:
       - id: check_comment
         name: Check comment
         run: |
-          match_result=$(echo "$COMMENT_BODY" | grep -qEe '^@phlexbot[[:space:]]+format\b' && echo match || echo non_match)
+          match_result=$(echo "$COMMENT_BODY" | grep -qEe '^@phlexbot[[:space:]]+python-fix\b' && echo match || echo non_match)
           echo match_result="$match_result" >> $GITHUB_OUTPUT
 
           ISSUE_NUMBER=${{ github.event.issue.number }}
@@ -37,45 +36,54 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           COMMENT_BODY: ${{ github.event.comment.body }}
 
-  apply_formatting:
+  apply_fixes:
     runs-on: ubuntu-latest
-    name: Apply formatting
+    name: Apply fixes
     needs: check
-    if: ${{ needs.check.outputs.match_result == 'match' && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') }}
+    if: ${{ needs.check.outputs.match_result == 'match' }}
+    permissions:
+      contents: write
+      pull-requests: write
+    container:
+      image: ghcr.io/framework-r-d/phlex-ci:latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: phlex-src
-          ref: ${{ steps.get_pr_info.outputs.ref_name }}
-          repository: ${{ steps.get_pr_info.outputs.repo_name }}
+          ref: ${{ needs.check.outputs.ref_name }}
+          repository: ${{ needs.check.outputs.repo_name }}
           token: ${{ secrets.WORKFLOW_PAT }}
 
-      - uses: DoozyX/clang-format-lint-action@bcb4eb2cb0d707ee4f3e5cc3b456eb075f12cf73 # v0.20
-        with:
-          source: "./phlex-src"
-          clangFormatVersion: 20
-          inplace: True
-          extensions: cpp,hpp,cpp.in,hpp.in
+      - name: Run ruff format and fix
+        working-directory: phlex-src
+        env:
+          FORCE_COLOR: 1
+        run: |
+          . /entrypoint.sh
+          echo "Fixing Python format with ruff"
+          ruff format . || true
+          echo "Fixing Python linter issues with ruff"
+          ruff --fix . || true
 
-      - uses: EndBug/add-and-commit@a94899bca583c204427a224a7af87c02f9b325d5 # v9.1.4
+      - uses: EndBug/add-and-commit@777a761e0f8293b7b051170404976d7cf10611cb # v9.1.4
         id: add_and_commit
         with:
           token: ${{ secrets.WORKFLOW_PAT }}
           cwd: phlex-src
           author_name: "github-actions[bot]"
           author_email: "41898282+github-actions[bot]@users.noreply.github.com"
-          message: 'Committing clang-format changes'
+          message: 'Committing Python linting fixes'
 
       - name: Formatting changes committed and pushed
         if: ${{ steps.add_and_commit.outputs.committed == 'true' && steps.add_and_commit.outputs.pushed == 'true'}}
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
-            Code-formatting changes pushed (commit ${{ steps.add_and_commit.outputs.commit_sha }})
+            Python linting fixes pushed (commit ${{ steps.add_and_commit.outputs.commit_sha }})
 
       - name: No formatting changes to make
         if: ${{ steps.add_and_commit.outputs.committed == 'false' }}
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
-            No code-formatting changes to make
+            No Python linting fixes to make
