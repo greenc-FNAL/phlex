@@ -1,0 +1,78 @@
+name: Python Check
+run-name: "${{ github.actor }} checking Python code"
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  detect-python-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    outputs:
+      has_changes: ${{ steps.filter.outputs.matched }}
+      changed_files: ${{ steps.filter.outputs.matched_files }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        fetch-depth: 0
+        path: phlex-src
+
+    - name: Detect Python changes
+      id: filter
+      uses: Framework-R-D/phlex/.github/actions/detect-relevant-changes@main
+      with:
+        repo-path: phlex-src
+        base-ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        head-ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        file-type: python
+
+    - name: Report detection outcome
+      run: |
+        if [ "${{ steps.filter.outputs.matched }}" != "true" ]; then
+          echo "::notice::No Python related changes detected; job will be skipped."
+        else
+          echo "::group::Python relevant files"
+          printf '%s\n' "${{ steps.filter.outputs.matched_files }}"
+          echo "::endgroup::"
+        fi
+
+  python-check:
+    needs: detect-python-changes
+    if: ${{ (needs.detect-python-changes.outputs.has_changes == 'true') || (github.event_name == 'workflow_dispatch') || (env.ACT == 'true') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ghcr.io/framework-r-d/phlex-ci:latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        path: phlex-src
+
+    - name: Run ruff and mypy checks
+      working-directory: phlex-src
+      run: |
+        /entrypoint.sh
+        ruff check .
+        mypy .
+
+  python-check-skipped:
+    needs: detect-python-changes
+    if: ${{ (needs.detect-python-changes.outputs.has_changes != 'true') && (github.event_name != 'workflow_dispatch') && (env.ACT != 'true') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: No relevant Python changes detected
+      run: echo "No Python relevant changes detected; check skipped."
