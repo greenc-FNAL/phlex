@@ -113,7 +113,7 @@ jobs:
 
         echo "➡️ Running tests..."
         echo "::group::Running ctest"
-        if ctest -j $(nproc); then
+        if ctest --progress -j $(nproc); then
           echo "::endgroup::"
           echo "✅ All tests passed."
         else
