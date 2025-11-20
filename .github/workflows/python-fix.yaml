@@ -6,15 +6,14 @@ on:
     types:
       - created
 
-permissions:
-   pull-requests: write
-   contents: write
-
 jobs:
   check:
     runs-on: ubuntu-latest
     name: Check for phlexbot token
-    if: ${{ github.event.issue.pull_request }}
+    if: ${{ github.event.issue.pull_request && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') }}
+    permissions:
+      contents: read
+      pull-requests: read
 
     outputs:
       match_result: ${{ steps.check_comment.outputs.match_result }}
@@ -42,10 +41,13 @@ jobs:
     name: Apply fixes
     needs: check
     if: ${{ needs.check.outputs.match_result == 'match' }}
+    permissions:
+      contents: write
+      pull-requests: write
     container:
       image: ghcr.io/framework-r-d/phlex-ci:latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: phlex-src
           ref: ${{ needs.check.outputs.ref_name }}
@@ -59,7 +61,7 @@ jobs:
           ruff format .
           ruff --fix .
 
-      - uses: EndBug/add-and-commit@v9
+      - uses: EndBug/add-and-commit@777a761e0f8293b7b051170404976d7cf10611cb # v9.1.4
         id: add_and_commit
         with:
           token: ${{ secrets.WORKFLOW_PAT }}
@@ -70,14 +72,14 @@ jobs:
 
       - name: Formatting changes committed and pushed
         if: ${{ steps.add_and_commit.outputs.committed == 'true' && steps.add_and_commit.outputs.pushed == 'true'}}
-        uses: thollander/actions-comment-pull-request@v3
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
             Python linting fixes pushed (commit ${{ steps.add_and_commit.outputs.commit_sha }})
 
       - name: No formatting changes to make
         if: ${{ steps.add_and_commit.outputs.committed == 'false' }}
-        uses: thollander/actions-comment-pull-request@v3
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
             No Python linting fixes to make
