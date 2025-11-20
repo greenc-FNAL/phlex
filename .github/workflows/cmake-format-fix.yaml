@@ -11,23 +11,13 @@ permissions:
   contents: write
 
 jobs:
-  check:
+  apply_cmake_formatting:
     runs-on: ubuntu-latest
-    name: Check for phlexbot token
-    if: ${{ github.event.issue.pull_request }}
-
-    outputs:
-      match_result: ${{ steps.check_comment.outputs.match_result }}
-      ref_name: ${{ steps.check_comment.outputs.ref_name }}
-      repo_name: ${{ steps.check_comment.outputs.repo_name }}
-
+    name: Apply CMake formatting
+    if: github.event.issue.pull_request && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') && startsWith(github.event.comment.body, '@phlexbot format')
     steps:
-      - id: check_comment
-        name: Check comment
+      - id: get_pr_info
         run: |
-          match_result=$(echo "$COMMENT_BODY" | grep -qE '^@phlexbot[[:space:]]+format\b' && echo match || echo non_match)
-          echo match_result="$match_result" >> $GITHUB_OUTPUT
-
           ISSUE_NUMBER=${{ github.event.issue.number }}
           REPO="${{ github.repository }}"
           gh api "repos/$REPO/pulls/$ISSUE_NUMBER" > pr.json
@@ -35,20 +25,13 @@ jobs:
           echo "repo_name=$(jq -r .head.repo.full_name pr.json)" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
-          COMMENT_BODY: ${{ github.event.comment.body }}
 
-  apply_cmake_formatting:
-    runs-on: ubuntu-latest
-    name: Apply CMake formatting
-    needs: check
-    if: ${{ needs.check.outputs.match_result == 'match' && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') }}
-    steps:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           path: phlex-src
-          ref: ${{ needs.check.outputs.ref_name }}
-          repository: ${{ needs.check.outputs.repo_name }}
+          ref: ${{ steps.get_pr_info.outputs.ref_name }}
+          repository: ${{ steps.get_pr_info.outputs.repo_name }}
           token: ${{ secrets.WORKFLOW_PAT }}
 
       - name: Set up Python
