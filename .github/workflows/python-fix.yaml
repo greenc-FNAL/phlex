@@ -58,7 +58,9 @@ jobs:
         working-directory: phlex-src
         run: |
           . /entrypoint.sh
+          echo "Fixing Python format with ruff"
           ruff format . || true
+          echo "Fixing Python linter issues with ruff"
           ruff --fix . || true
 
       - uses: EndBug/add-and-commit@777a761e0f8293b7b051170404976d7cf10611cb # v9.1.4
