@@ -34,28 +34,18 @@ jobs:
 
     outputs:
       triggered: ${{ steps.decision.outputs.triggered }}
+      is_act: ${{ steps.detect_act.outputs.is_act }}
 
     steps:
     - name: Check out source code
-      uses: actions/checkout@v4
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
         path: phlex-src
 
     - name: Detect act environment
       id: detect_act
-      run: |
-        if [ "${GITHUB_ACTOR}" = "nektos/act" ] || [ "${ACT:-}" = "true" ] || [ "${ACT:-}" = "1" ]; then
-          echo "is_act=true" >> $GITHUB_OUTPUT
-        else
-          echo "is_act=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Force execution when running under act
-      id: act_force
-      if: ${{ steps.detect_act.outputs.is_act == 'true' }}
-      run: |
-        echo "matched=true" >> "$GITHUB_OUTPUT"
+      uses: ./phlex-src/.github/actions/detect-act-env
 
     - name: Check for workflow_dispatch or issue_comment trigger
       id: check_manual_triggers
@@ -84,7 +74,7 @@ jobs:
     - name: Set final decision
       id: decision
       run: |
-        if [ "${{ steps.act_force.outputs.matched }}" = "true" ]; then
+        if [ "${{ steps.detect_act.outputs.is_act }}" = "true" ]; then
           echo "triggered=true"
         elif [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "issue_comment" ]; then
           echo "triggered=${{ steps.check_manual_triggers.outputs.triggered }}"
@@ -97,11 +87,20 @@ jobs:
   build:
     name: Build and Test (${{ matrix.compiler }}, ${{ matrix.sanitizer }})
     needs: detect-build-changes
-    if: needs.detect-build-changes.outputs.triggered == 'true' && (github.event_name == 'workflow_dispatch' || github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') &&
-      (github.event_name != 'push' && github.event_name != 'pull_request' ||
-       matrix.compiler != 'clang' || matrix.sanitizer != 'none') &&
-      (github.event_name != 'push' && github.event_name != 'pull_request' ||
-       matrix.compiler != 'clang' || matrix.sanitizer != 'tsan')
+    if: |
+      needs.detect-build-changes.outputs.triggered == 'true' &&
+      (
+        github.event_name != 'issue_comment' ||
+        (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER')
+      ) &&
+      (
+        (github.event_name != 'push' && github.event_name != 'pull_request') ||
+        (matrix.compiler != 'clang' || matrix.sanitizer != 'none')
+      ) &&
+      (
+        (github.event_name != 'push' && github.event_name != 'pull_request') ||
+        (matrix.compiler != 'clang' || matrix.sanitizer != 'tsan')
+      )
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -155,17 +154,6 @@ jobs:
         extra-options: |
           ${{ matrix.sanitizer == 'asan' && '-DPHLEX_ENABLE_ASAN=ON' || '' }}
           ${{ matrix.sanitizer == 'tsan' && '-DPHLEX_ENABLE_TSAN=ON' || '' }}
-      continue-on-error: true
-
-    - name: Evaluate CMake configuration result
-      if: always()
-      run: |
-        if [[ ${{ steps.configure.outcome }} == 'success' ]]; then
-          echo "✅ CMake configuration succeeded."
-        else
-          echo "❌ CMake configuration failed."
-          exit 1
-        fi
 
     - name: Announce build
       run: echo "➡️ Building code..."
@@ -173,17 +161,6 @@ jobs:
     - name: Build
       id: build
       uses: Framework-R-D/phlex/.github/actions/build-cmake@main
-      continue-on-error: true
-
-    - name: Evaluate build result
-      if: always()
-      run: |
-        if [[ ${{ steps.build.outcome }} == 'success' ]]; then
-          echo "✅ Build succeeded."
-        else
-          echo "❌ Build failed."
-          exit 1
-        fi
 
     - name: Run tests
       env:
@@ -202,3 +179,12 @@ jobs:
           echo "❌ Some tests failed."
           exit 1
         fi
+
+  build-skipped:
+    name: Build and Test Skipped
+    needs: detect-build-changes
+    if: needs.detect-build-changes.outputs.triggered != 'true' && needs.detect-build-changes.outputs.is_act != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report skipped build
+        run: echo "No relevant changes detected, build and test skipped."
