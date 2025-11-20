@@ -88,9 +88,12 @@ jobs:
     - name: Run ruff and mypy checks
       working-directory: phlex-src
       run: |
-        /entrypoint.sh
-        ruff check .
+        . /entrypoint.sh
+        if ! ruff check; then
+          failed_ruff=1
+        fi
         mypy .
+        exit $? || ${failed_ruff}
 
   python-check-skipped:
     needs: detect-python-changes

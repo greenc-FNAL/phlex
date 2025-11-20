@@ -57,9 +57,9 @@ jobs:
       - name: Run ruff format and fix
         working-directory: phlex-src
         run: |
-          /entrypoint.sh
-          ruff format .
-          ruff --fix .
+          . /entrypoint.sh
+          ruff format . || true
+          ruff --fix . || true
 
       - uses: EndBug/add-and-commit@777a761e0f8293b7b051170404976d7cf10611cb # v9.1.4
         id: add_and_commit
