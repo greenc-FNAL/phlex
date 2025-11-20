@@ -56,6 +56,8 @@ jobs:
 
       - name: Run ruff format and fix
         working-directory: phlex-src
+        env:
+          FORCE_COLOR: 1
         run: |
           . /entrypoint.sh
           echo "Fixing Python format with ruff"

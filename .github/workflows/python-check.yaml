@@ -87,6 +87,8 @@ jobs:
 
     - name: Run ruff and mypy checks
       working-directory: phlex-src
+      env:
+        FORCE_COLOR: 1  # `ruff`/`colored` crate
       run: |
         . /entrypoint.sh
 
@@ -105,7 +107,7 @@ jobs:
 
         echo "➡️ Checking Python code with mypy..."
         echo "::group::Running mypy"
-        if ! mypy .; then
+        if ! mypy --color-output .; then
           failed=1
           echo "::endgroup::"
           echo "❌ MyPy check failed."

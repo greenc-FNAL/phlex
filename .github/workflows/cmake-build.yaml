@@ -107,13 +107,15 @@ jobs:
         fi
 
     - name: Run tests
+      env:
+        CICOLOR_FORCE: 1
       run: |
         . /entrypoint.sh
         cd $GITHUB_WORKSPACE/phlex-build
 
         echo "➡️ Running tests..."
         echo "::group::Running ctest"
-        if ctest -j $(nproc); then
+        if ctest --progress --output-on-failure -j $(nproc); then
           echo "::endgroup::"
           echo "✅ All tests passed."
         else
