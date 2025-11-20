@@ -68,16 +68,56 @@ jobs:
     - name: Setup build environment
       uses: Framework-R-D/phlex/.github/actions/setup-build-env@main
 
+    - name: Announce CMake configuration
+      run: echo "➡️ Configuring CMake..."
+
     - name: Configure CMake
+      id: configure
       uses: Framework-R-D/phlex/.github/actions/configure-cmake@main
       with:
         build-type: ${{ env.BUILD_TYPE }}
+      continue-on-error: true
+
+    - name: Evaluate CMake configuration result
+      if: always()
+      run: |
+        if [[ ${{ steps.configure.outcome }} == 'success' ]]; then
+          echo "✅ CMake configuration succeeded."
+        else
+          echo "❌ CMake configuration failed."
+          exit 1
+        fi
+
+    - name: Announce build
+      run: echo "➡️ Building code..."
 
     - name: Build
+      id: build
       uses: Framework-R-D/phlex/.github/actions/build-cmake@main
+      continue-on-error: true
 
-    - name: Test
+    - name: Evaluate build result
+      if: always()
+      run: |
+        if [[ ${{ steps.build.outcome }} == 'success' ]]; then
+          echo "✅ Build succeeded."
+        else
+          echo "❌ Build failed."
+          exit 1
+        fi
+
+    - name: Run tests
       run: |
         . /entrypoint.sh
         cd $GITHUB_WORKSPACE/phlex-build
-        ctest -j $(nproc)
+
+        echo "➡️ Running tests..."
+        echo "::group::Running ctest"
+        if ctest -j $(nproc); then
+          echo "::endgroup::"
+          echo "✅ All tests passed."
+        else
+          echo "::endgroup::"
+          echo "❌ Some tests failed."
+          exit 1
+        fi

@@ -132,10 +132,17 @@ jobs:
         . /entrypoint.sh
         cd $GITHUB_WORKSPACE/phlex-build
 
-        echo "Running clang-tidy checks using CMake target..."
-
+        echo "➡️ Running clang-tidy checks..."
+        echo "::group::Running clang-tidy via CMake target"
         set -o pipefail
-        cmake --build . --target clang-tidy-check -- --export-fixes clang-tidy-fixes.yaml > clang-tidy.log 2>&1 || true
+        if cmake --build . --target clang-tidy-check -- --export-fixes clang-tidy-fixes.yaml > clang-tidy.log 2>&1; then
+          echo "::endgroup::"
+          echo "✅ clang-tidy check passed."
+        else
+          echo "::endgroup::"
+          echo "❌ clang-tidy check failed. See log for details."
+        fi
+        true
 
     - name: Check for clang-tidy issues
       shell: bash
