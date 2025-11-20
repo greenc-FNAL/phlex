@@ -5,26 +5,28 @@ on:
   issue_comment:
     types:
       - created
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to apply fixes to"
-        required: true
 
 jobs:
-  apply_fixes:
+  check:
     runs-on: ubuntu-latest
-    name: Apply fixes
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && github.event.issue.pull_request && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') && contains(github.event.comment.body, '@phlexbot python-fix'))
+    name: Check for phlexbot token
+    if: ${{ github.event.issue.pull_request && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') }}
     permissions:
-      contents: write
-      pull-requests: write
-    container:
-      image: ghcr.io/framework-r-d/phlex-ci:latest
+      contents: read
+      pull-requests: read
+
+    outputs:
+      match_result: ${{ steps.check_comment.outputs.match_result }}
+      ref_name: ${{ steps.check_comment.outputs.ref_name }}
+      repo_name: ${{ steps.check_comment.outputs.repo_name }}
+
     steps:
-      - id: get_pr_info
-        if: github.event_name == 'issue_comment'
+      - id: check_comment
+        name: Check comment
         run: |
+          match_result=$(echo "$COMMENT_BODY" | grep -qEe '^@phlexbot[[:space:]]+python-fix\b' && echo match || echo non_match)
+          echo match_result="$match_result" >> $GITHUB_OUTPUT
+
           ISSUE_NUMBER=${{ github.event.issue.number }}
           REPO="${{ github.repository }}"
           gh api "repos/$REPO/pulls/$ISSUE_NUMBER" > pr.json
@@ -32,20 +34,24 @@ jobs:
           echo "repo_name=$(jq -r .head.repo.full_name pr.json)" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
 
+  apply_fixes:
+    runs-on: ubuntu-latest
+    name: Apply fixes
+    needs: check
+    if: ${{ needs.check.outputs.match_result == 'match' }}
+    permissions:
+      contents: write
+      pull-requests: write
+    container:
+      image: ghcr.io/framework-r-d/phlex-ci:latest
+    steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        if: github.event_name == 'issue_comment'
         with:
           path: phlex-src
-          ref: ${{ steps.get_pr_info.outputs.ref_name }}
-          repository: ${{ steps.get_pr_info.outputs.repo_name }}
-          token: ${{ secrets.WORKFLOW_PAT }}
-
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        if: github.event_name == 'workflow_dispatch'
-        with:
-          path: phlex-src
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ needs.check.outputs.ref_name }}
+          repository: ${{ needs.check.outputs.repo_name }}
           token: ${{ secrets.WORKFLOW_PAT }}
 
       - name: Run ruff format and fix
@@ -67,23 +73,15 @@ jobs:
           message: 'Committing Python linting fixes'
 
       - name: Formatting changes committed and pushed
-        if: github.event_name == 'issue_comment' && steps.add_and_commit.outputs.committed == 'true' && steps.add_and_commit.outputs.pushed == 'true'
+        if: ${{ steps.add_and_commit.outputs.committed == 'true' && steps.add_and_commit.outputs.pushed == 'true'}}
         uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
             Python linting fixes pushed (commit ${{ steps.add_and_commit.outputs.commit_sha }})
 
       - name: No formatting changes to make
-        if: github.event_name == 'issue_comment' && steps.add_and_commit.outputs.committed == 'false'
+        if: ${{ steps.add_and_commit.outputs.committed == 'false' }}
         uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
             No Python linting fixes to make
-
-      - name: Log commit SHA
-        if: github.event_name == 'workflow_dispatch' && steps.add_and_commit.outputs.committed == 'true'
-        run: echo "Changes committed: ${{ steps.add_and_commit.outputs.commit_sha }}"
-
-      - name: Log no changes
-        if: github.event_name == 'workflow_dispatch' && steps.add_and_commit.outputs.committed == 'false'
-        run: echo "No changes to commit."
