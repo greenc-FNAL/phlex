@@ -89,13 +89,32 @@ jobs:
       working-directory: phlex-src
       run: |
         . /entrypoint.sh
-        echo "Checking Python code with ruff"
+
+        failed=0
+
+        echo "➡️ Checking Python code with ruff..."
+        echo "::group::Running ruff check"
         if ! ruff check; then
-          failed_ruff=1
+          failed=1
+          echo "::endgroup::"
+          echo "❌ Ruff check failed."
+        else
+          echo "::endgroup::"
+          echo "✅ Ruff check passed."
         fi
-        echo "Checking Python code with mypy"
-        mypy . && echo "mypy detected no issues"
-        exit $? || ${failed_ruff}
+
+        echo "➡️ Checking Python code with mypy..."
+        echo "::group::Running mypy"
+        if ! mypy .; then
+          failed=1
+          echo "::endgroup::"
+          echo "❌ MyPy check failed."
+        else
+          echo "::endgroup::"
+          echo "✅ MyPy check passed."
+        fi
+
+        exit $failed
 
   python-check-skipped:
     needs: detect-python-changes
