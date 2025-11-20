@@ -32,6 +32,7 @@ jobs:
     outputs:
       has_changes: ${{ steps.filter.outputs.matched }}
       changed_files: ${{ steps.filter.outputs.matched_files }}
+      is_act: ${{ steps.detect_act.outputs.is_act }}
 
     steps:
     - name: Check out source code
@@ -39,6 +40,10 @@ jobs:
       with:
         fetch-depth: 0
         path: phlex-src
+
+    - name: Detect act environment
+      id: detect_act
+      uses: ./phlex-src/.github/actions/detect-act-env
 
     - name: Detect coverage relevant changes
       id: filter
@@ -63,7 +68,7 @@ jobs:
 
   coverage:
     needs: detect-coverage-changes
-    if: ${{ (needs.detect-coverage-changes.outputs.has_changes == 'true') || (github.event_name == 'workflow_dispatch') || (env.ACT == 'true') }}
+    if: ${{ (needs.detect-coverage-changes.outputs.has_changes == 'true') || (github.event_name == 'workflow_dispatch') || (needs.detect-coverage-changes.outputs.is_act == 'true') }}
     runs-on: ubuntu-24.04
 
     container:
@@ -113,7 +118,6 @@ jobs:
         preset: coverage-gcc
         enable-form: ${{ steps.coverage_options.outputs.enable_form }}
         form-root-storage: ${{ steps.coverage_options.outputs.enable_form }}
-      continue-on-error: true
 
     - name: Configure CMake with Clang coverage
       id: configure_clang
@@ -124,20 +128,9 @@ jobs:
         preset: coverage-clang
         enable-form: ${{ steps.coverage_options.outputs.enable_form }}
         form-root-storage: ${{ steps.coverage_options.outputs.enable_form }}
-      continue-on-error: true
-
-    - name: Evaluate CMake configuration result
-      if: always()
-      run: |
-        if [[ ${{ steps.configure_gcc.outcome }} == 'success' || ${{ steps.configure_clang.outcome }} == 'success' ]]; then
-          echo "✅ CMake configuration succeeded."
-        else
-          echo "❌ CMake configuration failed."
-          exit 1
-        fi
 
     - name: Unknown Compiler Error
-      if: ${{ always() && steps.coverage_options.outputs.compiler != 'gcc' && steps.coverage_options.outputs.compiler != 'clang' }}
+      if: ${{ steps.coverage_options.outputs.compiler != 'gcc' && steps.coverage_options.outputs.compiler != 'clang' }}
       run: |
         echo "ERROR: Unknown compiler '${{ steps.coverage_options.outputs.compiler }}'. Must be 'gcc' or 'clang'."
         exit 1
@@ -148,17 +141,6 @@ jobs:
     - name: Build with coverage instrumentation
       id: build
       uses: Framework-R-D/phlex/.github/actions/build-cmake@main
-      continue-on-error: true
-
-    - name: Evaluate build result
-      if: always()
-      run: |
-        if [[ ${{ steps.build.outcome }} == 'success' ]]; then
-          echo "✅ Build succeeded."
-        else
-          echo "❌ Build failed."
-          exit 1
-        fi
 
     - name: Run tests with coverage
       run: |
@@ -243,7 +225,7 @@ jobs:
         fi
 
     - name: Unknown Coverage Report Error
-      if: ${{ always() && steps.report_gcc.outcome == 'skipped' && steps.report_clang.outcome == 'skipped' }}
+      if: ${{ steps.report_gcc.outcome == 'skipped' && steps.report_clang.outcome == 'skipped' }}
       run: |
         echo "ERROR: No coverage report was generated. Must run either GCC or Clang coverage report step."
         exit 1
@@ -367,7 +349,7 @@ jobs:
 
   coverage-skipped:
     needs: detect-coverage-changes
-    if: ${{ (needs.detect-coverage-changes.outputs.has_changes != 'true') && (github.event_name != 'workflow_dispatch') && (env.ACT != 'true') }}
+    if: ${{ (needs.detect-coverage-changes.outputs.has_changes != 'true') && (github.event_name != 'workflow_dispatch') && (needs.detect-coverage-changes.outputs.is_act != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
