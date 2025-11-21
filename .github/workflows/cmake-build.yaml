@@ -101,16 +101,17 @@ jobs:
         sanitizer: [none, asan, tsan, valgrind]
         exclude:
           - compiler: clang
-            sanitizer: none
-          - compiler: clang
-            sanitizer: tsan
-          - compiler: clang
             sanitizer: valgrind
 
     container:
       image: ghcr.io/framework-r-d/phlex-ci:latest
 
     steps:
+    - name: Conditionally skip jobs
+      if: (github.event_name == 'push' || github.event_name == 'pull_request') && (matrix.compiler == 'clang' && (matrix.sanitizer == 'none' || matrix.sanitizer == 'tsan'))
+      run: |
+        echo "Skipping clang/none and clang/tsan for push/pull_request events."
+        exit 78
     - name: Get PR details for comment trigger
       if: github.event_name == 'issue_comment'
       id: pr
