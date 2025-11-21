@@ -106,12 +106,14 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [gcc, clang]
-        sanitizer: [none, asan, tsan]
+        sanitizer: [none, asan, tsan, valgrind]
         exclude:
           - compiler: clang
             sanitizer: none
           - compiler: clang
             sanitizer: tsan
+          - compiler: clang
+            sanitizer: valgrind
 
     container:
       image: ghcr.io/framework-r-d/phlex-ci:latest
@@ -160,6 +162,7 @@ jobs:
       uses: Framework-R-D/phlex/.github/actions/build-cmake@main
 
     - name: Run tests
+      if: matrix.sanitizer != 'valgrind'
       env:
         CICOLOR_FORCE: 1
       run: |
@@ -175,6 +178,24 @@ jobs:
           echo "::endgroup::"
           echo "❌ Some tests failed."
           exit 1
+        fi
+
+    - name: Run Valgrind tests
+      if: matrix.sanitizer == 'valgrind'
+      env:
+        CICOLOR_FORCE: 1
+      run: |
+        . /entrypoint.sh
+        cd $GITHUB_WORKSPACE/phlex-build
+
+        echo "➡️ Running Valgrind tests..."
+        echo "::group::Running ctest -T memcheck"
+        if ctest -T memcheck; then
+          echo "::endgroup::"
+          echo "✅ Valgrind tests passed."
+        else
+          echo "::endgroup::"
+          echo "⚠️ Valgrind tests failed, but the workflow will continue."
         fi
 
   build-skipped:
