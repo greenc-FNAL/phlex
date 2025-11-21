@@ -9,12 +9,15 @@ on:
     types: [created]
   workflow_dispatch:
     inputs:
-      compiler:
-        description: 'Compiler to use (gcc or clang)'
-        required: false
-        default: ''
-      sanitizer:
-        description: 'Sanitizer to use (none, asan, or tsan)'
+      build-combinations:
+        description: |
+          A space- or comma-separated list of build combinations to run.
+          Syntax examples:
+          - `gcc/asan clang/tsan` (run only these two)
+          - `all` (run all combinations)
+          - `all -clang/none -clang/valgrind` (run all except specified)
+          - `+clang/none +clang/valgrind` (run default matrix plus specified)
+          Default (if empty): Run all except clang/none and clang/valgrind.
         required: false
         default: ''
 
@@ -84,9 +87,137 @@ jobs:
           echo "triggered=false"
         fi > >(tee -a $GITHUB_OUTPUT)
 
+  generate-matrix:
+    name: Generate Build Matrix
+    needs: detect-build-changes
+    if: needs.detect-build-changes.outputs.triggered == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - id: generate
+        env:
+          USER_INPUT: ${{ github.event.inputs.build-combinations }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          all_combinations=(
+            "gcc/none" "gcc/asan" "gcc/tsan" "gcc/valgrind"
+            "clang/none" "clang/asan" "clang/tsan" "clang/valgrind"
+          )
+          default_excluded=( "clang/none" "clang/valgrind" )
+
+          # Determine input string based on trigger
+          input_str=""
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            input_str="$USER_INPUT"
+          elif [ "${{ github.event_name }}" == "issue_comment" ]; then
+            input_str=$(echo "$COMMENT_BODY" | sed -n 's/^@phlexbot build //p')
+          fi
+
+          # Parse input string
+          read -ra tokens <<< "${input_str//,/ }"
+
+          final_combinations=()
+          if [ ${#tokens[@]} -eq 0 ]; then
+            # Default behavior for PR/push or empty manual trigger
+            for combo in "${all_combinations[@]}"; do
+              is_excluded=0
+              for excluded_combo in "${default_excluded[@]}"; do
+                if [ "$combo" == "$excluded_combo" ]; then
+                  is_excluded=1
+                  break
+                fi
+              done
+              if [ $is_excluded -eq 0 ]; then
+                final_combinations+=("$combo")
+              fi
+            done
+          else
+            # Manual trigger with specific combinations
+            is_additive=0
+            for token in "${tokens[@]}"; do
+              if [ "$token" == "all" ] || [[ "$token" == +* ]] || [[ "$token" == -* ]]; then
+                is_additive=1
+                break
+              fi
+            done
+
+            if [ $is_additive -eq 1 ]; then
+              # Additive/Subtractive mode
+              base_set=()
+              if [[ " ${tokens[*]} " =~ " all " ]]; then
+                base_set=("${all_combinations[@]}")
+              else
+                # Start with default set for additions
+                for combo in "${all_combinations[@]}"; do
+                  is_excluded=0
+                  for excluded_combo in "${default_excluded[@]}"; do
+                    if [ "$combo" == "$excluded_combo" ]; then
+                      is_excluded=1
+                      break
+                    fi
+                  done
+                  if [ $is_excluded -eq 0 ]; then
+                    base_set+=("$combo")
+                  fi
+                done
+              fi
+
+              additions=()
+              removals=()
+              for token in "${tokens[@]}"; do
+                if [[ "$token" == -* ]]; then
+                  removals+=("${token:1}")
+                elif [[ "$token" == +* ]]; then
+                  additions+=("${token:1}")
+                fi
+              done
+
+              # Additions
+              for combo in "${additions[@]}"; do
+                base_set+=("$combo")
+              done
+
+              # Removals
+              temp_set=()
+              for combo in "${base_set[@]}"; do
+                is_excluded=0
+                for excluded_combo in "${removals[@]}"; do
+                  if [ "$combo" == "$excluded_combo" ]; then
+                    is_excluded=1
+                    break
+                  fi
+                done
+                if [ $is_excluded -eq 0 ]; then
+                  temp_set+=("$combo")
+                fi
+              done
+              final_combinations=("${temp_set[@]}")
+            else
+              # Explicit list mode
+              final_combinations=("${tokens[@]}")
+            fi
+          fi
+
+          # Generate JSON
+          json="{\"include\":["
+          first=true
+          unique_combinations=($(echo "${final_combinations[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+          for combo in "${unique_combinations[@]}"; do
+            if [ "$first" = false ]; then
+              json+=","
+            fi
+            first=false
+            compiler=$(echo "$combo" | cut -d'/' -f1)
+            sanitizer=$(echo "$combo" | cut -d'/' -f2)
+            json+="{\"compiler\":\"$compiler\",\"sanitizer\":\"$sanitizer\"}"
+          done
+          json+="]}"
+          echo "matrix=$json" >> $GITHUB_OUTPUT
+
   build:
     name: Build and Test (${{ matrix.compiler }}, ${{ matrix.sanitizer }})
-    needs: detect-build-changes
+    needs: [detect-build-changes, generate-matrix]
     if: |
       needs.detect-build-changes.outputs.triggered == 'true' &&
       (
@@ -96,22 +227,12 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
-      matrix:
-        compiler: [gcc, clang]
-        sanitizer: [none, asan, tsan, valgrind]
-        exclude:
-          - compiler: clang
-            sanitizer: valgrind
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
 
     container:
       image: ghcr.io/framework-r-d/phlex-ci:latest
 
     steps:
-    - name: Conditionally skip jobs
-      if: (github.event_name == 'push' || github.event_name == 'pull_request') && (matrix.compiler == 'clang' && (matrix.sanitizer == 'none' || matrix.sanitizer == 'tsan'))
-      run: |
-        echo "Skipping clang/none and clang/tsan for push/pull_request events."
-        exit 78
     - name: Get PR details for comment trigger
       if: github.event_name == 'issue_comment'
       id: pr
