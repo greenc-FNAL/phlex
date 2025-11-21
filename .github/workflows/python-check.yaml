@@ -53,8 +53,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    container:
-      image: ghcr.io/framework-r-d/phlex-ci:latest
 
     steps:
     - name: Checkout code
@@ -62,13 +60,20 @@ jobs:
       with:
         path: phlex-src
 
+    - name: Set up Python
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
+      with:
+        python-version: '3.x'
+
+    - name: Install Python dependencies
+      run: |
+        pip install ruff mypy
+
     - name: Run ruff and mypy checks
       working-directory: phlex-src
       env:
         FORCE_COLOR: 1  # `ruff`/`colored` crate
       run: |
-        . /entrypoint.sh
-
         failed=0
 
         echo "➡️ Checking Python code with ruff..."
