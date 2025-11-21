@@ -20,13 +20,18 @@ jobs:
     outputs:
       has_changes: ${{ steps.filter.outputs.matched }}
       changed_files: ${{ steps.filter.outputs.matched_files }}
+      is_act: ${{ steps.detect_act.outputs.is_act }}
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4.1.7
       with:
         fetch-depth: 0
         path: phlex-src
+
+    - name: Detect act environment
+      id: detect_act
+      uses: ./phlex-src/.github/actions/detect-act-env
 
     - name: Detect CMake formatting changes
       id: filter
@@ -49,12 +54,12 @@ jobs:
 
   cmake-format-check:
     needs: detect-cmake-format-changes
-    if: ${{ (needs.detect-cmake-format-changes.outputs.has_changes == 'true') || (github.event_name == 'workflow_dispatch') || (env.ACT == 'true') }}
+    if: ${{ (needs.detect-cmake-format-changes.outputs.has_changes == 'true') || (github.event_name == 'workflow_dispatch') || (needs.detect-cmake-format-changes.outputs.is_act == 'true') }}
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4.1.7
       with:
         path: phlex-src
 
@@ -97,7 +102,7 @@ jobs:
 
   cmake-format-check-skipped:
     needs: detect-cmake-format-changes
-    if: ${{ (needs.detect-cmake-format-changes.outputs.has_changes != 'true') && (github.event_name != 'workflow_dispatch') && (env.ACT != 'true') }}
+    if: ${{ (needs.detect-cmake-format-changes.outputs.has_changes != 'true') && (github.event_name != 'workflow_dispatch') && (needs.detect-cmake-format-changes.outputs.is_act != 'true') }}
     runs-on: ubuntu-latest
 
     steps:
