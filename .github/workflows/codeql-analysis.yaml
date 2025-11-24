@@ -3,9 +3,9 @@ name: "CodeQL - Analyze (C++, Python, Actions)"
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
   schedule:
     - cron: '0 3 * * 0'  # weekly (UTC) — adjust as needed
   workflow_dispatch:

@@ -7,7 +7,7 @@ permissions:
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
   workflow_dispatch:
 
 jobs:
@@ -104,7 +104,7 @@ jobs:
         echo "::endgroup::"
 
         if [ $format_errors -gt 0 ]; then
-          echo "❌ Found $format_errors file(s) with formatting issues."
+          echo "::error::Found $format_errors file(s) with formatting issues."
           echo "::error::Run 'cmake-format -i <file>' locally or comment '@phlexbot format' on the PR to auto-fix."
           exit 1
         else

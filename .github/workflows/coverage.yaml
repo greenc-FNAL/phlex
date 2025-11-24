@@ -171,7 +171,7 @@ jobs:
           echo "✅ All tests passed."
         else
           echo "::endgroup::"
-          echo "❌ Some tests failed."
+          echo "::error::Some tests failed."
           exit 1
         fi
 
@@ -190,7 +190,7 @@ jobs:
           echo "✅ GCC coverage report generation succeeded."
         else
           echo "::endgroup::"
-          echo "❌ GCC coverage report generation failed."
+          echo "::error::GCC coverage report generation failed."
           exit 1
         fi
 
@@ -209,7 +209,7 @@ jobs:
           echo "✅ Clang coverage report generation succeeded."
         else
           echo "::endgroup::"
-          echo "❌ Clang coverage report generation failed."
+          echo "::error::Clang coverage report generation failed."
           exit 1
         fi
 

@@ -7,7 +7,7 @@ permissions:
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
   workflow_dispatch:
 
 jobs:
@@ -94,7 +94,7 @@ jobs:
         if [[ ${{ steps.lint.outcome }} == 'success' ]]; then
           echo "✅ clang-format check passed."
         else
-          echo "❌ clang-format check failed. Please review the output above for details."
+          echo "::error::clang-format check failed. Please review the output above for details."
           exit 1
         fi
 
