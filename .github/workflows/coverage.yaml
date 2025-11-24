@@ -367,4 +367,4 @@ jobs:
 
     steps:
     - name: No relevant coverage changes detected
-      run: echo "No relevant C++ changes detected; coverage workflow skipped."
+      run: echo "::notice::No relevant C++ changes detected; coverage workflow skipped."

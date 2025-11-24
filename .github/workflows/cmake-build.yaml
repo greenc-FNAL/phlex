@@ -158,4 +158,4 @@ jobs:
 
     steps:
     - name: No relevant C++ or CMake changes detected
-      run: echo "No relevant C++ or CMake changes detected; build skipped."
+      run: echo "::notice::No relevant C++ or CMake changes detected; build skipped."
