@@ -107,4 +107,4 @@ jobs:
 
     steps:
     - name: No relevant C++ changes detected
-      run: echo "No clang-format relevant changes detected; check skipped."
+      run: echo "::notice::No clang-format relevant changes detected; check skipped."

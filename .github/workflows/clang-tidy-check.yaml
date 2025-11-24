@@ -204,4 +204,4 @@ jobs:
 
     steps:
     - name: No relevant clang-tidy changes detected
-      run: echo "No clang-tidy relevant changes detected; check skipped."
+      run: echo "::notice::No clang-tidy relevant changes detected; check skipped."

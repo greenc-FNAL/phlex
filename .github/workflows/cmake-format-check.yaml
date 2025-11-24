@@ -118,4 +118,4 @@ jobs:
 
     steps:
     - name: No relevant CMake changes detected
-      run: echo "No CMake-related changes detected; cmake-format check skipped."
+      run: echo "::notice::No CMake-related changes detected; cmake-format check skipped."
