@@ -14,19 +14,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  check_comment_trigger:
+  tidy-pre-check:
     runs-on: ubuntu-latest
-    name: Check for phlexbot tidy-check token
-    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request)
 
     outputs:
-      match_result: ${{ steps.check_comment.outputs.match_result }}
+      is_act: ${{ steps.detect_act.outputs.is_act }}
+      should_run: ${{ steps.check_comment.outputs.match_result == 'match' }}
       tidy_checks: ${{ steps.check_comment.outputs.tidy_checks }}
       ref_name: ${{ steps.check_comment.outputs.ref_name }}
       repo_name: ${{ steps.check_comment.outputs.repo_name }}
 
     steps:
+      - name: Detect act environment
+        id: detect_act
+        uses: Framework-R-D/phlex/.github/actions/detect-act-env@main
+
       - id: check_comment
+        if: github.event_name == 'issue_comment'
         name: Check comment
         run: |
           match_result=$(echo "$COMMENT_BODY" | grep -qE '^@phlexbot[[:space:]]+tidy-check\b' && echo match || echo non_match)
@@ -52,7 +60,10 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
 
   detect-clang-tidy-changes:
-    if: github.event_name == 'pull_request' && github.actor != 'nektos/act'
+    needs: tidy-pre-check
+    if: >
+      github.event_name == 'pull_request' &&
+      needs.tidy-pre-check.outputs.is_act != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -60,7 +71,6 @@ jobs:
 
     outputs:
       has_changes: ${{ steps.filter.outputs.matched }}
-      changed_files: ${{ steps.filter.outputs.matched_files }}
 
     steps:
     - name: Checkout code
@@ -91,12 +101,13 @@ jobs:
         fi
 
   clang-tidy-check:
-    needs: [ detect-clang-tidy-changes, check_comment_trigger ]
+    needs: [tidy-pre-check, detect-clang-tidy-changes]
     if: >
-      (github.event_name == 'workflow_dispatch') ||
-      (github.actor == 'nektos/act') ||
+      github.event_name == 'workflow_dispatch' ||
+      needs.tidy-pre-check.outputs.is_act == 'true' ||
       (github.event_name == 'pull_request' && needs.detect-clang-tidy-changes.result == 'success' && needs.detect-clang-tidy-changes.outputs.has_changes == 'true') ||
-      (github.event_name == 'issue_comment' && needs.check_comment_trigger.outputs.match_result == 'match' && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER'))
+      (github.event_name == 'issue_comment' && needs.tidy-pre-check.outputs.should_run == 'true' && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER'))
+
     runs-on: ubuntu-24.04
 
     container:
@@ -104,7 +115,7 @@ jobs:
 
     steps:
     - name: Checkout code (PR)
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         path: phlex-src
@@ -114,8 +125,8 @@ jobs:
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         path: phlex-src
-        ref: ${{ needs.check_comment_trigger.outputs.ref_name }}
-        repository: ${{ needs.check_comment_trigger.outputs.repo_name }}
+        ref: ${{ needs.tidy-pre-check.outputs.ref_name }}
+        repository: ${{ needs.tidy-pre-check.outputs.repo_name }}
 
     - name: Setup build environment
       uses: Framework-R-D/phlex/.github/actions/setup-build-env@main
@@ -128,7 +139,7 @@ jobs:
 
     - name: Run clang-tidy using CMake target
       env:
-        PHLEX_TIDY_CHECKS: ${{ needs.check_comment_trigger.outputs.tidy_checks }}
+        PHLEX_TIDY_CHECKS: ${{ needs.tidy-pre-check.outputs.tidy_checks }}
       shell: bash
       run: |
         . /entrypoint.sh
@@ -181,11 +192,12 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   clang-tidy-check-skipped:
-    needs: detect-clang-tidy-changes
+    needs: [tidy-pre-check, detect-clang-tidy-changes]
     if: >
-      (github.event_name == 'pull_request') &&
-      (github.actor != 'nektos/act') &&
-      (needs.detect-clang-tidy-changes.result == 'success' && needs.detect-clang-tidy-changes.outputs.has_changes != 'true')
+      github.event_name == 'pull_request' &&
+      needs.tidy-pre-check.outputs.is_act != 'true' &&
+      needs.detect-clang-tidy-changes.result == 'success' &&
+      needs.detect-clang-tidy-changes.outputs.has_changes != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -72,7 +72,6 @@ jobs:
       packages: read
     outputs:
       has_changes: ${{ steps.filter.outputs.matched }}
-      changed_files: ${{ steps.filter.outputs.matched_files }}
 
     steps:
       - name: Check out source code

@@ -12,18 +12,22 @@ on:
 
 jobs:
   detect-cmake-format-changes:
-    if: github.event_name != 'workflow_dispatch' && github.actor != 'nektos/act'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
 
     outputs:
-      has_changes: ${{ steps.filter.outputs.matched }}
-      changed_files: ${{ steps.filter.outputs.matched_files }}
+      has_changes: ${{ steps.set_outputs.outputs.has_changes }}
+      is_act: ${{ steps.detect_act.outputs.is_act }}
 
     steps:
+    - name: Detect act environment
+      id: detect_act
+      uses: Framework-R-D/phlex/.github/actions/detect-act-env@main
+
     - name: Checkout code
+      if: github.event_name != 'workflow_dispatch' && steps.detect_act.outputs.is_act != 'true'
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         fetch-depth: 0
@@ -31,6 +35,7 @@ jobs:
 
     - name: Detect CMake formatting changes
       id: filter
+      if: github.event_name != 'workflow_dispatch' && steps.detect_act.outputs.is_act != 'true'
       uses: Framework-R-D/phlex/.github/actions/detect-relevant-changes@main
       with:
         repo-path: phlex-src
@@ -39,6 +44,7 @@ jobs:
         file-type: cmake
 
     - name: Report detection outcome
+      if: github.event_name != 'workflow_dispatch' && steps.detect_act.outputs.is_act != 'true'
       run: |
         if [ "${{ steps.filter.outputs.matched }}" != "true" ]; then
           echo "::notice::No CMake-related changes detected; formatting check will be skipped."
@@ -48,12 +54,18 @@ jobs:
           echo "::endgroup::"
         fi
 
+    - name: Set outputs
+      id: set_outputs
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ steps.detect_act.outputs.is_act }}" == "true" ]]; then
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_changes=${{ steps.filter.outputs.matched }}" >> $GITHUB_OUTPUT
+        fi
+
   cmake-format-check:
     needs: detect-cmake-format-changes
-    if: >
-      (github.event_name == 'workflow_dispatch') ||
-      (github.actor == 'nektos/act') ||
-      (needs.detect-cmake-format-changes.result == 'success' && needs.detect-cmake-format-changes.outputs.has_changes == 'true')
+    if: needs.detect-cmake-format-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -101,10 +113,7 @@ jobs:
 
   cmake-format-check-skipped:
     needs: detect-cmake-format-changes
-    if: >
-      (github.event_name != 'workflow_dispatch') &&
-      (github.actor != 'nektos/act') &&
-      (needs.detect-cmake-format-changes.result == 'success' && needs.detect-cmake-format-changes.outputs.has_changes != 'true')
+    if: needs.detect-cmake-format-changes.result == 'success' && needs.detect-cmake-format-changes.outputs.has_changes != 'true'
     runs-on: ubuntu-latest
 
     steps:
