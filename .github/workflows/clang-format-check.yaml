@@ -11,23 +11,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  detect-clang-format-changes:
+  pre-check:
+    runs-on: ubuntu-latest
+    outputs:
+      is_act: ${{ steps.detect_act.outputs.is_act }}
+    steps:
+      - name: Detect act environment
+        id: detect_act
+        uses: Framework-R-D/phlex/.github/actions/detect-act-env@main
+
+  detect-changes:
+    needs: pre-check
+    if: github.event_name != 'workflow_dispatch' && needs.pre-check.outputs.is_act != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
-
     outputs:
-      has_changes: ${{ steps.set_outputs.outputs.has_changes }}
-      is_act: ${{ steps.detect_act.outputs.is_act }}
-
+      has_changes: ${{ steps.filter.outputs.matched }}
     steps:
-    - name: Detect act environment
-      id: detect_act
-      uses: Framework-R-D/phlex/.github/actions/detect-act-env@main
-
     - name: Checkout code
-      if: github.event_name != 'workflow_dispatch' && steps.detect_act.outputs.is_act != 'true'
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         fetch-depth: 0
@@ -35,7 +38,6 @@ jobs:
 
     - name: Detect C++ formatting changes
       id: filter
-      if: github.event_name != 'workflow_dispatch' && steps.detect_act.outputs.is_act != 'true'
       uses: Framework-R-D/phlex/.github/actions/detect-relevant-changes@main
       with:
         repo-path: phlex-src
@@ -44,7 +46,6 @@ jobs:
         file-type: cpp
 
     - name: Report detection outcome
-      if: github.event_name != 'workflow_dispatch' && steps.detect_act.outputs.is_act != 'true'
       run: |
         if [ "${{ steps.filter.outputs.matched }}" != "true" ]; then
           echo "::notice::No clang-format related changes detected; job will be skipped."
@@ -54,18 +55,12 @@ jobs:
           echo "::endgroup::"
         fi
 
-    - name: Set outputs
-      id: set_outputs
-      run: |
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ steps.detect_act.outputs.is_act }}" == "true" ]]; then
-          echo "has_changes=true" >> $GITHUB_OUTPUT
-        else
-          echo "has_changes=${{ steps.filter.outputs.matched }}" >> $GITHUB_OUTPUT
-        fi
-
   clang-format-check:
-    needs: detect-clang-format-changes
-    if: needs.detect-clang-format-changes.outputs.has_changes == 'true'
+    needs: [pre-check, detect-changes]
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      needs.pre-check.outputs.is_act == 'true' ||
+      (needs.detect-changes.result == 'success' && needs.detect-changes.outputs.has_changes == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -99,8 +94,12 @@ jobs:
         fi
 
   clang-format-check-skipped:
-    needs: detect-clang-format-changes
-    if: needs.detect-clang-format-changes.result == 'success' && needs.detect-clang-format-changes.outputs.has_changes != 'true'
+    needs: [pre-check, detect-changes]
+    if: >
+      github.event_name != 'workflow_dispatch' &&
+      needs.pre-check.outputs.is_act != 'true' &&
+      needs.detect-changes.result == 'success' &&
+      needs.detect-changes.outputs.has_changes != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

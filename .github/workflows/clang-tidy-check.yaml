@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  tidy-pre-check:
+  pre-check:
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'workflow_dispatch' ||
@@ -59,11 +59,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           COMMENT_BODY: ${{ github.event.comment.body }}
 
-  detect-clang-tidy-changes:
-    needs: tidy-pre-check
+  detect-changes:
+    needs: pre-check
     if: >
       github.event_name == 'pull_request' &&
-      needs.tidy-pre-check.outputs.is_act != 'true'
+      needs.pre-check.outputs.is_act != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -101,12 +101,12 @@ jobs:
         fi
 
   clang-tidy-check:
-    needs: [tidy-pre-check, detect-clang-tidy-changes]
+    needs: [pre-check, detect-changes]
     if: >
       github.event_name == 'workflow_dispatch' ||
-      needs.tidy-pre-check.outputs.is_act == 'true' ||
-      (github.event_name == 'pull_request' && needs.detect-clang-tidy-changes.result == 'success' && needs.detect-clang-tidy-changes.outputs.has_changes == 'true') ||
-      (github.event_name == 'issue_comment' && needs.tidy-pre-check.outputs.should_run == 'true' && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER'))
+      needs.pre-check.outputs.is_act == 'true' ||
+      (github.event_name == 'pull_request' && needs.detect-changes.result == 'success' && needs.detect-changes.outputs.has_changes == 'true') ||
+      (github.event_name == 'issue_comment' && needs.pre-check.outputs.should_run == 'true' && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER'))
 
     runs-on: ubuntu-24.04
 
@@ -125,8 +125,8 @@ jobs:
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         path: phlex-src
-        ref: ${{ needs.tidy-pre-check.outputs.ref_name }}
-        repository: ${{ needs.tidy-pre-check.outputs.repo_name }}
+        ref: ${{ needs.pre-check.outputs.ref_name }}
+        repository: ${{ needs.pre-check.outputs.repo_name }}
 
     - name: Setup build environment
       uses: Framework-R-D/phlex/.github/actions/setup-build-env@main
@@ -139,7 +139,7 @@ jobs:
 
     - name: Run clang-tidy using CMake target
       env:
-        PHLEX_TIDY_CHECKS: ${{ needs.tidy-pre-check.outputs.tidy_checks }}
+        PHLEX_TIDY_CHECKS: ${{ needs.pre-check.outputs.tidy_checks }}
       shell: bash
       run: |
         . /entrypoint.sh

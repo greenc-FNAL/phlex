@@ -18,7 +18,7 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build-pre-check:
+  pre-check:
     if: >
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'pull_request' ||
@@ -67,12 +67,12 @@ jobs:
         id: detect_act
         uses: Framework-R-D/phlex/.github/actions/detect-act-env@main
 
-  detect-cmake-build-changes:
-    needs: build-pre-check
+  detect-changes:
+    needs: pre-check
     if: >
-      needs.build-pre-check.outputs.should_run == 'true' &&
+      needs.pre-check.outputs.should_run == 'true' &&
       github.event_name != 'workflow_dispatch' &&
-      needs.build-pre-check.outputs.is_act != 'true'
+      needs.pre-check.outputs.is_act != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -92,8 +92,8 @@ jobs:
         uses: Framework-R-D/phlex/.github/actions/detect-relevant-changes@main
         with:
           repo-path: phlex-src
-          base-ref: ${{ github.event_name == 'issue_comment' && fromJSON(needs.build-pre-check.outputs.pr_details).base_sha || github.event.pull_request.base.sha || github.event.before }}
-          head-ref: ${{ github.event_name == 'issue_comment' && fromJSON(needs.build-pre-check.outputs.pr_details).sha || github.event.pull_request.head.sha || github.sha }}
+          base-ref: ${{ github.event_name == 'issue_comment' && fromJSON(needs.pre-check.outputs.pr_details).base_sha || github.event.pull_request.base.sha || github.event.before }}
+          head-ref: ${{ github.event_name == 'issue_comment' && fromJSON(needs.pre-check.outputs.pr_details).sha || github.event.pull_request.head.sha || github.sha }}
           file-type: |
             cpp
             cmake
@@ -109,13 +109,13 @@ jobs:
           fi
 
   build:
-    needs: [build-pre-check, detect-cmake-build-changes]
+    needs: [pre-check, detect-changes]
     if: >
-      needs.build-pre-check.outputs.should_run == 'true' &&
+      needs.pre-check.outputs.should_run == 'true' &&
       (
         github.event_name == 'workflow_dispatch' ||
-        needs.build-pre-check.outputs.is_act == 'true' ||
-        (needs.detect-cmake-build-changes.result == 'success' && needs.detect-cmake-build-changes.outputs.has_changes == 'true')
+        needs.pre-check.outputs.is_act == 'true' ||
+        (needs.detect-changes.result == 'success' && needs.detect-changes.outputs.has_changes == 'true')
       ) &&
       (
         github.event_name != 'issue_comment' ||
@@ -152,13 +152,13 @@ jobs:
         ctest -j $(nproc)
 
   cmake-build-skipped:
-    needs: [build-pre-check, detect-cmake-build-changes]
+    needs: [pre-check, detect-changes]
     if: >
-      needs.build-pre-check.outputs.should_run == 'true' &&
+      needs.pre-check.outputs.should_run == 'true' &&
       github.event_name != 'workflow_dispatch' &&
-      needs.build-pre-check.outputs.is_act != 'true' &&
-      needs.detect-cmake-build-changes.result == 'success' &&
-      needs.detect-cmake-build-changes.outputs.has_changes != 'true'
+      needs.pre-check.outputs.is_act != 'true' &&
+      needs.detect-changes.result == 'success' &&
+      needs.detect-changes.outputs.has_changes != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
