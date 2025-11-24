@@ -14,15 +14,13 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  detect-cmake-build-changes:
+  build-pre-check:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && github.event.issue.pull_request)
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
     outputs:
-      has_changes: ${{ steps.filter.outputs.matched }}
-      changed_files: ${{ steps.filter.outputs.matched_files }}
       is_act: ${{ steps.detect_act.outputs.is_act }}
       should_run: ${{ steps.check.outputs.triggered }}
       pr_details: ${{ steps.pr.outputs.result }}
@@ -58,23 +56,38 @@ jobs:
               base_sha: pr.data.base.sha
             };
 
+      - name: Detect act environment
+        id: detect_act
+        uses: Framework-R-D/phlex/.github/actions/detect-act-env@main
+
+  detect-cmake-build-changes:
+    needs: build-pre-check
+    if: >
+      needs.build-pre-check.outputs.should_run == 'true' &&
+      github.event_name != 'workflow_dispatch' &&
+      needs.build-pre-check.outputs.is_act != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      has_changes: ${{ steps.filter.outputs.matched }}
+      changed_files: ${{ steps.filter.outputs.matched_files }}
+
+    steps:
       - name: Check out source code
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           fetch-depth: 0
           path: phlex-src
 
-      - name: Detect act environment
-        id: detect_act
-        uses: Framework-R-D/phlex/.github/actions/detect-act-env@main
-
       - name: Detect C++ and CMake changes
         id: filter
         uses: Framework-R-D/phlex/.github/actions/detect-relevant-changes@main
         with:
           repo-path: phlex-src
-          base-ref: ${{ github.event_name == 'issue_comment' && fromJSON(steps.pr.outputs.result).base_sha || github.event.pull_request.base.sha || github.event.before }}
-          head-ref: ${{ github.event_name == 'issue_comment' && fromJSON(steps.pr.outputs.result).sha || github.event.pull_request.head.sha || github.sha }}
+          base-ref: ${{ github.event_name == 'issue_comment' && fromJSON(needs.build-pre-check.outputs.pr_details).base_sha || github.event.pull_request.base.sha || github.event.before }}
+          head-ref: ${{ github.event_name == 'issue_comment' && fromJSON(needs.build-pre-check.outputs.pr_details).sha || github.event.pull_request.head.sha || github.sha }}
           file-type: |
             cpp
             cmake
@@ -90,13 +103,13 @@ jobs:
           fi
 
   build:
-    needs: detect-cmake-build-changes
+    needs: [build-pre-check, detect-cmake-build-changes]
     if: >
-      needs.detect-cmake-build-changes.outputs.should_run == 'true' &&
+      needs.build-pre-check.outputs.should_run == 'true' &&
       (
-        (needs.detect-cmake-build-changes.outputs.has_changes == 'true') ||
-        (github.event_name == 'workflow_dispatch') ||
-        (needs.detect-cmake-build-changes.outputs.is_act == 'true')
+        github.event_name == 'workflow_dispatch' ||
+        needs.build-pre-check.outputs.is_act == 'true' ||
+        (needs.detect-cmake-build-changes.result == 'success' && needs.detect-cmake-build-changes.outputs.has_changes == 'true')
       ) &&
       (
         github.event_name == 'workflow_dispatch' ||
@@ -113,7 +126,7 @@ jobs:
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         path: phlex-src
-        ref: ${{ github.event_name == 'issue_comment' && fromJSON(needs.detect-cmake-build-changes.outputs.pr_details).sha || github.ref }}
+        ref: ${{ github.event_name == 'issue_comment' && fromJSON(needs.build-pre-check.outputs.pr_details).sha || github.ref }}
 
     - name: Setup build environment
       uses: Framework-R-D/phlex/.github/actions/setup-build-env@main
@@ -133,14 +146,13 @@ jobs:
         ctest -j $(nproc)
 
   cmake-build-skipped:
-    needs: detect-cmake-build-changes
+    needs: [build-pre-check, detect-cmake-build-changes]
     if: >
-      needs.detect-cmake-build-changes.outputs.should_run == 'true' &&
-      (
-        (needs.detect-cmake-build-changes.outputs.has_changes != 'true') &&
-        (github.event_name != 'workflow_dispatch') &&
-        (needs.detect-cmake-build-changes.outputs.is_act != 'true')
-      )
+      needs.build-pre-check.outputs.should_run == 'true' &&
+      github.event_name != 'workflow_dispatch' &&
+      needs.build-pre-check.outputs.is_act != 'true' &&
+      needs.detect-cmake-build-changes.result == 'success' &&
+      needs.detect-cmake-build-changes.outputs.has_changes != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

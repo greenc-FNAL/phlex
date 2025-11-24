@@ -52,7 +52,7 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
 
   detect-clang-tidy-changes:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.actor != 'nektos/act'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -61,7 +61,6 @@ jobs:
     outputs:
       has_changes: ${{ steps.filter.outputs.matched }}
       changed_files: ${{ steps.filter.outputs.matched_files }}
-      is_act: ${{ steps.detect_act.outputs.is_act }}
 
     steps:
     - name: Checkout code
@@ -69,10 +68,6 @@ jobs:
       with:
         fetch-depth: 0
         path: phlex-src
-
-    - name: Detect act environment
-      id: detect_act
-      uses: Framework-R-D/phlex/.github/actions/detect-act-env@main
 
     - name: Detect clang-tidy relevant changes
       id: filter
@@ -97,10 +92,11 @@ jobs:
 
   clang-tidy-check:
     needs: [ detect-clang-tidy-changes, check_comment_trigger ]
-    if: |
-      (github.event_name == 'pull_request' && needs.detect-clang-tidy-changes.outputs.has_changes == 'true') ||
-      (github.event_name == 'issue_comment' && needs.check_comment_trigger.outputs.match_result == 'match' && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER')) ||
-      (github.event_name == 'workflow_dispatch') || (needs.detect-clang-tidy-changes.outputs.is_act == 'true')
+    if: >
+      (github.event_name == 'workflow_dispatch') ||
+      (github.actor == 'nektos/act') ||
+      (github.event_name == 'pull_request' && needs.detect-clang-tidy-changes.result == 'success' && needs.detect-clang-tidy-changes.outputs.has_changes == 'true') ||
+      (github.event_name == 'issue_comment' && needs.check_comment_trigger.outputs.match_result == 'match' && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER'))
     runs-on: ubuntu-24.04
 
     container:
@@ -186,7 +182,10 @@ jobs:
 
   clang-tidy-check-skipped:
     needs: detect-clang-tidy-changes
-    if: github.event_name == 'pull_request' && (needs.detect-clang-tidy-changes.outputs.has_changes != 'true') && (github.event_name != 'workflow_dispatch') && (needs.detect-clang-tidy-changes.outputs.is_act != 'true')
+    if: >
+      (github.event_name == 'pull_request') &&
+      (github.actor != 'nektos/act') &&
+      (needs.detect-clang-tidy-changes.result == 'success' && needs.detect-clang-tidy-changes.outputs.has_changes != 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: read

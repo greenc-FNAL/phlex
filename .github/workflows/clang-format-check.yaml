@@ -12,6 +12,7 @@ on:
 
 jobs:
   detect-clang-format-changes:
+    if: github.event_name != 'workflow_dispatch' && github.actor != 'nektos/act'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -20,7 +21,6 @@ jobs:
     outputs:
       has_changes: ${{ steps.filter.outputs.matched }}
       changed_files: ${{ steps.filter.outputs.matched_files }}
-      is_act: ${{ steps.detect_act.outputs.is_act }}
 
     steps:
     - name: Checkout code
@@ -28,10 +28,6 @@ jobs:
       with:
         fetch-depth: 0
         path: phlex-src
-
-    - name: Detect act environment
-      id: detect_act
-      uses: Framework-R-D/phlex/.github/actions/detect-act-env@main
 
     - name: Detect C++ formatting changes
       id: filter
@@ -54,7 +50,10 @@ jobs:
 
   clang-format-check:
     needs: detect-clang-format-changes
-    if: ${{ (needs.detect-clang-format-changes.outputs.has_changes == 'true') || (github.event_name == 'workflow_dispatch') || (needs.detect-clang-format-changes.outputs.is_act == 'true') }}
+    if: >
+      (github.event_name == 'workflow_dispatch') ||
+      (github.actor == 'nektos/act') ||
+      (needs.detect-clang-format-changes.result == 'success' && needs.detect-clang-format-changes.outputs.has_changes == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -89,7 +88,10 @@ jobs:
 
   clang-format-check-skipped:
     needs: detect-clang-format-changes
-    if: ${{ (needs.detect-clang-format-changes.outputs.has_changes != 'true') && (github.event_name != 'workflow_dispatch') && (needs.detect-clang-format-changes.outputs.is_act != 'true') }}
+    if: >
+      (github.event_name != 'workflow_dispatch') &&
+      (github.actor != 'nektos/act') &&
+      (needs.detect-clang-format-changes.result == 'success' && needs.detect-clang-format-changes.outputs.has_changes != 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: read
