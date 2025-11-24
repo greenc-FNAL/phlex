@@ -118,7 +118,7 @@ jobs:
       uses: Framework-R-D/phlex/.github/actions/setup-build-env@main
 
     - name: Announce CMake configuration
-      run: echo "➡️ Configuring CMake for coverage..."
+      run: echo "::notice::Configuring CMake for coverage..."
 
     - name: Configure CMake with GCC coverage
       id: configure_gcc
@@ -147,7 +147,7 @@ jobs:
         exit 1
 
     - name: Announce build
-      run: echo "➡️ Building with coverage instrumentation..."
+      run: echo "::notice::Building with coverage instrumentation..."
 
     - name: Build with coverage instrumentation
       id: build
@@ -158,7 +158,7 @@ jobs:
         . /entrypoint.sh
         cd $GITHUB_WORKSPACE/phlex-build
 
-        echo "➡️ Running tests with coverage..."
+        echo "::notice::Running tests with coverage..."
         PROFILE_ROOT="$GITHUB_WORKSPACE/phlex-build/test/profraw"
         echo "Cleaning LLVM profile directory: $PROFILE_ROOT"
         rm -rf "$PROFILE_ROOT"
@@ -168,10 +168,10 @@ jobs:
         echo "::group::Running ctest for coverage"
         if ctest --progress --output-on-failure -j $(nproc); then
           echo "::endgroup::"
-          echo "✅ All tests passed."
+          echo "::notice::All tests passed."
         else
           echo "::endgroup::"
-          echo "❌ Some tests failed."
+          echo "::error::Some tests failed."
           exit 1
         fi
 
@@ -183,14 +183,14 @@ jobs:
         . /entrypoint.sh
         cd $GITHUB_WORKSPACE/phlex-build
 
-        echo "➡️ Generating coverage reports for GCC..."
+        echo "::notice::Generating coverage reports for GCC..."
         echo "::group::Running coverage-gcov target"
         if cmake --build . --target coverage-gcov -v; then
           echo "::endgroup::"
-          echo "✅ GCC coverage report generation succeeded."
+          echo "::notice::GCC coverage report generation succeeded."
         else
           echo "::endgroup::"
-          echo "❌ GCC coverage report generation failed."
+          echo "::error::GCC coverage report generation failed."
           exit 1
         fi
 
@@ -202,14 +202,14 @@ jobs:
         . /entrypoint.sh
         cd $GITHUB_WORKSPACE/phlex-build
 
-        echo "➡️ Generating coverage reports for Clang..."
+        echo "::notice::Generating coverage reports for Clang..."
         echo "::group::Running coverage-llvm target"
         if cmake --build . --target coverage-llvm -v; then
           echo "::endgroup::"
-          echo "✅ Clang coverage report generation succeeded."
+          echo "::notice::Clang coverage report generation succeeded."
         else
           echo "::endgroup::"
-          echo "❌ Clang coverage report generation failed."
+          echo "::error::Clang coverage report generation failed."
           exit 1
         fi
 

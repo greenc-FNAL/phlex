@@ -145,7 +145,7 @@ jobs:
         . /entrypoint.sh
         cd $GITHUB_WORKSPACE/phlex-build
 
-        echo "➡️ Running clang-tidy checks..."
+        echo "::notice::Running clang-tidy checks..."
         cmake --build . --target clang-tidy-check -- --export-fixes clang-tidy-fixes.yaml > clang-tidy.log 2>&1 || true
         if [ -s clang-tidy-fixes.yaml ]; then
           echo "::error::Clang-tidy found issues in the code"
@@ -154,7 +154,7 @@ jobs:
           echo "Comment '@phlexbot tidy-fix [<check>...]' on the PR to attempt auto-fix"
           exit 1
         else
-          echo "✅ clang-tidy check passed"
+          echo "::notice::clang-tidy check passed"
         fi
 
     - name: Upload clang-tidy report

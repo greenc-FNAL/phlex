@@ -77,7 +77,7 @@ jobs:
         path: phlex-src
 
     - name: Announce clang-format check
-      run: echo "➡️ Running clang-format check..."
+      run: echo "::notice::Running clang-format check..."
 
     - name: Run clang-format lint
       id: lint
@@ -92,9 +92,9 @@ jobs:
       if: always()
       run: |
         if [[ ${{ steps.lint.outcome }} == 'success' ]]; then
-          echo "✅ clang-format check passed."
+          echo "::notice::clang-format check passed."
         else
-          echo "❌ clang-format check failed. Please review the output above for details."
+          echo "::error::clang-format check failed. Please review the output above for details."
           exit 1
         fi
 
