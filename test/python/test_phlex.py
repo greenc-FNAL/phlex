@@ -2,6 +2,7 @@
 
 class TestPYPHLEX:
 
+    @classmethod
     def setup_class(cls):
         import pyphlex  # noqa: F401
         __all__ = ['pyphlex'] # For CodeQL
