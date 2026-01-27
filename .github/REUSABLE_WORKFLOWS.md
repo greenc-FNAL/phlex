@@ -37,9 +37,25 @@ For development purposes, you may choose to use `@main` at your own risk to get 
 
 ---
 
-### For Contributors Working on a Fork of Phlex
+### For Phlex Project Contributors
 
-If you are developing on a fork of `Framework-R-D/phlex` itself, the CI/CD workflows will run automatically on your pull requests within the fork, just as they do on the main repository. You do not need to use the `uses:` syntax described below.
+This section is for developers contributing directly to the `Framework-R-D/phlex` repository, including those working on forks.
+
+#### Running Workflows Manually (`workflow_dispatch`)
+
+Most workflows in this repository can be run manually on any branch, tag, or commit. This is useful for testing changes without creating a pull request or for applying fixes to a specific branch.
+
+To run a workflow manually:
+1.  Navigate to the **Actions** tab of the Phlex repository (or your fork).
+2.  In the left sidebar, click the workflow you want to run (e.g., **Clang-Format Check**).
+3.  Above the list of workflow runs, you will see a banner that says "This workflow has a `workflow_dispatch` event trigger." Click the **Run workflow** dropdown on the right.
+4.  Use the **Branch/tag** dropdown to select the branch you want to run the workflow on.
+5.  Some workflows have additional inputs (e.g., the `cmake-build` workflow allows you to specify build combinations). Fill these out as needed.
+6.  Click the **Run workflow** button.
+
+#### For Contributors on a Fork
+
+If you are developing on a fork of `Framework-R-D/phlex`, CI workflows will run automatically on your pull requests. However, to use workflows that push fixes (like the formatters), you need to do two things first:
 
 However, to enable the automatic fixing features (e.g., for `cmake-format-fix` or `python-fix`), you will need to perform two steps:
 
