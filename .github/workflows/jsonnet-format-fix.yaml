@@ -1,5 +1,5 @@
-name: Clang-Format Fix
-run-name: "${{ github.actor }} fixing code format"
+name: Jsonnet Format Fix
+run-name: "${{ github.actor }} fixing jsonnet format"
 
 on:
   issue_comment:
@@ -27,7 +27,7 @@ jobs:
         github.event.issue.pull_request &&
         (
           startsWith(github.event.comment.body, '@phlexbot format') ||
-          startsWith(github.event.comment.body, '@phlexbot clang-format-fix')
+          startsWith(github.event.comment.body, '@phlexbot jsonnet-format-fix')
         )
       )
     outputs:
@@ -53,17 +53,20 @@ jobs:
           repository: ${{ needs.pre-check.outputs.repo }}
           token: ${{ secrets.WORKFLOW_PAT }}
 
-      - uses: DoozyX/clang-format-lint-action@bcb4eb2cb0d707ee4f3e5cc3b456eb075f12cf73 # v0.20
-        with:
-          source: "./phlex-src"
-          clangFormatVersion: 20
-          inplace: True
-          extensions: cpp,hpp,cpp.in,hpp.in
+      - name: Run jsonnetfmt
+        id: lint
+        run: |
+          docker run --rm \
+            -v "$(pwd)/phlex-src:/work" \
+            -w /work \
+            google/jsonnet:latest \
+            jsonnetfmt --in-place $(find . -name "*.jsonnet" -o -name "*.jsonnet.in")
+        continue-on-error: true
 
       - name: Handle fix commit
         uses: ./phlex-src/.github/actions/handle-fix-commit
         with:
-          tool: clang-format
+          tool: jsonnet-format
           working-directory: phlex-src
           token: ${{ secrets.WORKFLOW_PAT }}
           pr-info-ref: ${{ needs.pre-check.outputs.ref }}

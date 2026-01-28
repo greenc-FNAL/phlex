@@ -88,10 +88,11 @@ jobs:
   cmake-format-check:
     needs: [pre-check, detect-changes]
     if: >
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_call' && inputs.skip-relevance-check == 'true') ||
-      needs.pre-check.outputs.is_act == 'true' ||
-      (needs.detect-changes.result == 'success' && needs.detect-changes.outputs.has_changes == 'true')
+      needs.detect-changes.result == 'skipped' ||
+      (
+        needs.detect-changes.result == 'success' &&
+        needs.detect-changes.outputs.has_changes == 'true'
+      )
     runs-on: ubuntu-latest
 
     steps:

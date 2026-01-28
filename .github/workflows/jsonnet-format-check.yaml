@@ -1,5 +1,5 @@
-name: Clang-Format Check
-run-name: "${{ github.actor }} checking code format"
+name: Jsonnet Format Check
+run-name: "${{ github.actor }} checking jsonnet format"
 
 permissions:
   contents: read
@@ -27,9 +27,7 @@ jobs:
 
   detect-changes:
     needs: pre-check
-    if: >
-      github.event_name != 'workflow_dispatch' &&
-      needs.pre-check.outputs.is_act != 'true'
+    if: github.event_name != 'workflow_dispatch' && needs.pre-check.outputs.is_act != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -43,26 +41,16 @@ jobs:
         fetch-depth: 0
         path: phlex-src
 
-    - name: Detect C++ formatting changes
+    - name: Detect Jsonnet formatting changes
       id: filter
       uses: Framework-R-D/phlex/.github/actions/detect-relevant-changes@main
       with:
         repo-path: phlex-src
         base-ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         head-ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-        file-type: cpp
+        file-type: jsonnet
 
-    - name: Report detection outcome
-      run: |
-        if [ "${{ steps.filter.outputs.matched }}" != "true" ]; then
-          echo "::notice::No clang-format related changes detected; job will be skipped."
-        else
-          echo "::group::Clang-format relevant files"
-          printf '%s\n' "${{ steps.filter.outputs.matched_files }}"
-          echo "::endgroup::"
-        fi
-
-  clang-format-check:
+  jsonnet-format-check:
     needs: [pre-check, detect-changes]
     if: >
       needs.detect-changes.result == 'skipped' ||
@@ -81,29 +69,27 @@ jobs:
         ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.ref }}
         path: phlex-src
 
-    - name: Announce clang-format check
-      run: echo "➡️ Running clang-format check..."
-
-    - name: Run clang-format lint
+    - name: Run jsonnetfmt check
       id: lint
-      uses: DoozyX/clang-format-lint-action@bcb4eb2cb0d707ee4f3e5cc3b456eb075f12cf73 # v0.20
-      with:
-        source: "./phlex-src"
-        clangFormatVersion: 20
-        extensions: cpp,hpp,cpp.in,hpp.in
+      run: |
+        docker run --rm \
+          -v "$(pwd)/phlex-src:/work" \
+          -w /work \
+          google/jsonnet:latest \
+          jsonnetfmt --test $(find . -name "*.jsonnet" -o -name "*.jsonnet.in")
       continue-on-error: true
 
-    - name: Evaluate clang-format result
+    - name: Evaluate jsonnetfmt result
       if: always()
       run: |
         if [[ ${{ steps.lint.outcome }} == 'success' ]]; then
-          echo "✅ clang-format check passed."
+          echo "✅ jsonnetfmt check passed."
         else
-          echo "::error::clang-format check failed. Please review the output above for details."
+          echo "::error::jsonnetfmt check failed. Please review the output above for details."
           exit 1
         fi
 
-  clang-format-check-skipped:
+  jsonnet-format-check-skipped:
     needs: [pre-check, detect-changes]
     if: >
       github.event_name != 'workflow_dispatch' &&
@@ -115,5 +101,5 @@ jobs:
       contents: read
 
     steps:
-    - name: No relevant C++ changes detected
-      run: echo "::notice::No clang-format relevant changes detected; check skipped."
+    - name: No relevant Jsonnet changes detected
+      run: echo "::notice::No jsonnet-format relevant changes detected; check skipped."
