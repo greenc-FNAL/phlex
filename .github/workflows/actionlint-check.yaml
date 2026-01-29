@@ -92,6 +92,8 @@ jobs:
       needs.pre-check.outputs.is_act == 'true' ||
       (needs.detect-changes.result == 'success' && needs.detect-changes.outputs.has_changes == 'true')
     runs-on: ubuntu-latest
+    container:
+      image: rhysd/actionlint:latest
     permissions:
       contents: read
 
@@ -106,12 +108,8 @@ jobs:
 
     - name: Run actionlint
       id: lint
-      run: |
-        docker run --rm \
-          -v "${{ github.workspace }}/${{ env.local_checkout_path }}:/work" \
-          -w /work \
-          rhysd/actionlint:latest \
-          -config-file .github/actionlint.yaml
+      working-directory: ${{ env.local_checkout_path }}
+      run: actionlint -config-file .github/actionlint.yaml
       continue-on-error: true
 
     - name: Evaluate actionlint result
