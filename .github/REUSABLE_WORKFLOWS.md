@@ -28,13 +28,13 @@ Once you have done this, you can trigger the auto-fix workflows by commenting on
 For workflows that automatically commit fixes to pull requests (e.g., formatters), you must create a Personal Access Token (PAT) and add it as a secret to your repository.
 
 1. **Create a PAT:** Follow the GitHub documentation to [create a fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token).
-   -  Give it a descriptive name (e.g., `WORKFLOW_FIXES_PAT`).
-   -  Grant it the following repository permissions:
-      -  `Contents`: `Read and write`
-      -  `Pull requests`: `Read and write`
+   - Give it a descriptive name (e.g., `WORKFLOW_FIXES_PAT`).
+   - Grant it the following repository permissions:
+      - `Contents`: `Read and write`
+      - `Pull requests`: `Read and write`
 2. **Add the PAT as a Repository Secret:**
-   -  In your repository, go to `Settings` > `Secrets and variables` > `Actions`.
-   -  Create a new repository secret named `WORKFLOW_PAT` and paste your PAT as the value.
+   - In your repository, go to `Settings` > `Secrets and variables` > `Actions`.
+   - Create a new repository secret named `WORKFLOW_PAT` and paste your PAT as the value.
 
 ### Calling a Reusable Workflow from a Different Repository
 
@@ -64,7 +64,7 @@ For development purposes, you may choose to use `@main` at your own risk to get 
 
 Builds and tests your project using CMake.
 
-#### Usage Example:
+#### Usage Example: `cmake-build.yaml`
 
 ```yaml
 jobs:
@@ -78,22 +78,22 @@ jobs:
       repo: ${{ github.repository }}
 ```
 
-#### All Inputs:
+#### All Inputs: `cmake-build.yaml`
 
--  `checkout-path` (string, optional): Path to check out code to.
--  `build-path` (string, optional): Path for build artifacts.
--  `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs the build if C++ or CMake files have changed.
--  `build-combinations` (string, optional): A space-separated list of build combinations to run.
--  `ref` (string, optional): The branch or ref to check out.
--  `repo` (string, optional): The repository to check out from (e.g., `my-org/my-repo`).
--  `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
--  `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
+- `checkout-path` (string, optional): Path to check out code to.
+- `build-path` (string, optional): Path for build artifacts.
+- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs the build if C++ or CMake files have changed.
+- `build-combinations` (string, optional): A space-separated list of build combinations to run.
+- `ref` (string, optional): The branch or ref to check out.
+- `repo` (string, optional): The repository to check out from (e.g., `my-org/my-repo`).
+- `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
+- `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
 
 ### 2. `python-check.yaml`
 
 Checks Python code for formatting and type errors using `ruff` and `mypy`.
 
-#### Usage Example:
+#### Usage Example: `python-check.yaml`
 
 ```yaml
 jobs:
@@ -101,18 +101,18 @@ jobs:
     uses: Framework-R-D/phlex/.github/workflows/python-check.yaml@cef968c52aab432b836bb28119a9661c82c8b0d1
 ```
 
-#### All Inputs:
+#### All Inputs: `python-check.yaml`
 
--  `checkout-path` (string, optional): Path to check out code to.
--  `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Python files have changed.
--  `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
--  `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
+- `checkout-path` (string, optional): Path to check out code to.
+- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Python files have changed.
+- `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
+- `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
 
 ### 3. `cmake-format-fix.yaml`
 
 Automatically formats CMake files using `gersemi` and commits the changes. Typically triggered by an `issue_comment`.
 
-#### Usage Example (in a workflow triggered by `issue_comment`):
+#### Usage Example: `cmake-format-fix.yaml` (in a workflow triggered by `issue_comment`)
 
 ```yaml
 name: 'Bot Commands'
@@ -138,39 +138,39 @@ jobs:
 
 *Note: You would need a preliminary step (`get_pr_info`) to extract the PR's `ref` and `repo` from the `issue_comment` event.*
 
-#### All Inputs:
+#### All Inputs: `cmake-format-fix.yaml`
 
--  `checkout-path` (string, optional): Path to check out code to.
--  `ref` (string, **required**): The branch or ref to check out.
--  `repo` (string, **required**): The repository to check out from.
+- `checkout-path` (string, optional): Path to check out code to.
+- `ref` (string, **required**): The branch or ref to check out.
+- `repo` (string, **required**): The repository to check out from.
 
 ### 4. `python-fix.yaml`
 
 Automatically formats and fixes Python code using `ruff` and commits the changes. Typically triggered by an `issue_comment`.
 
-#### Usage Example (in a workflow triggered by `issue_comment`):
+#### Usage Example: `python-fix.yaml` (in a workflow triggered by `issue_comment`)
 
 *Similar to `cmake-format-fix.yaml`, but triggered by a command like `@<repo>bot python-fix`.*
 
-#### All Inputs:
+#### All Inputs: `python-fix.yaml`
 
--  `checkout-path` (string, optional): Path to check out code to.
--  `ref` (string, **required**): The branch or ref to check out.
--  `repo` (string, **required**): The repository to check out from.
+- `checkout-path` (string, optional): Path to check out code to.
+- `ref` (string, **required**): The branch or ref to check out.
+- `repo` (string, **required**): The repository to check out from.
 
 ### 5. `markdown-fix.yaml`
 
 Automatically formats Markdown files using `markdownlint` and commits the changes. Typically triggered by an `issue_comment`.
 
-#### Usage Example (in a workflow triggered by `issue_comment`)
+#### Usage Example: `markdown-fix.yaml` (in a workflow triggered by `issue_comment`)
 
 *Similar to `cmake-format-fix.yaml`, but triggered by a command like `@<repo>bot markdown-fix`.*
 
-#### All Inputs
+#### All Inputs: `markdown-fix.yaml`
 
--  `checkout-path` (string, optional): Path to check out code to.
--  `ref` (string, **required**): The branch or ref to check out.
--  `repo` (string, **required**): The repository to check out from.
+- `checkout-path` (string, optional): Path to check out code to.
+- `ref` (string, **required**): The branch or ref to check out.
+- `repo` (string, **required**): The repository to check out from.
 
 ### Other Workflows
 
