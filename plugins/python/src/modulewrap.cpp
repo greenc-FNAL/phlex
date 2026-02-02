@@ -911,32 +911,32 @@ static bool insert_input_converters(py_phlex_module* mod,
         return false;
       }
 
-      std::string suffix = inp_type.substr(pos);
-      std::string py_out = cname + "_" + inp + "py";
+      pos += 18;
 
-      if (suffix.find("uint32]]") != std::string::npos) {
-        mod->ph_module->transform("pyvuint_" + inp + "_" + cname, vuint_to_py, concurrency::serial)
-          .input_family(product_query{product_specification::create(inp), LAYER})
-          .output_products(py_out);
-      } else if (suffix.find("int32]]") != std::string::npos) {
+      std::string py_out = cname + "_" + inp + "py";
+      if (inp_type.compare(pos, std::string::npos, "int32]]") == 0) {
         mod->ph_module->transform("pyvint_" + inp + "_" + cname, vint_to_py, concurrency::serial)
           .input_family(product_query{product_specification::create(inp), LAYER})
           .output_products(py_out);
-      } else if (suffix.find("uint64]]") != std::string::npos) { // id.
+      } else if (inp_type.compare(pos, std::string::npos, "uint32]]") == 0) {
+        mod->ph_module->transform("pyvuint_" + inp + "_" + cname, vuint_to_py, concurrency::serial)
+          .input_family(product_query{product_specification::create(inp), LAYER})
+          .output_products(py_out);
+      } else if (inp_type.compare(pos, std::string::npos, "int64]]") == 0) { // need not be true
+        mod->ph_module->transform("pyvlong_" + inp + "_" + cname, vlong_to_py, concurrency::serial)
+          .input_family(product_query{product_specification::create(inp), LAYER})
+          .output_products(py_out);
+      } else if (inp_type.compare(pos, std::string::npos, "uint64]]") == 0) { // id.
         mod->ph_module
           ->transform("pyvulong_" + inp + "_" + cname, vulong_to_py, concurrency::serial)
           .input_family(product_query{product_specification::create(inp), LAYER})
           .output_products(py_out);
-      } else if (suffix.find("int64]]") != std::string::npos) { // need not be true
-        mod->ph_module->transform("pyvlong_" + inp + "_" + cname, vlong_to_py, concurrency::serial)
-          .input_family(product_query{product_specification::create(inp), LAYER})
-          .output_products(py_out);
-      } else if (suffix.find("float32]]") != std::string::npos) {
+      } else if (inp_type.compare(pos, std::string::npos, "float32]]") == 0) {
         mod->ph_module
           ->transform("pyvfloat_" + inp + "_" + cname, vfloat_to_py, concurrency::serial)
           .input_family(product_query{product_specification::create(inp), LAYER})
           .output_products(py_out);
-      } else if (suffix.find("float64]]") != std::string::npos) {
+      } else if (inp_type.compare(pos, std::string::npos, "float64]]") == 0) {
         mod->ph_module
           ->transform("pyvdouble_" + inp + "_" + cname, vdouble_to_py, concurrency::serial)
           .input_family(product_query{product_specification::create(inp), LAYER})
