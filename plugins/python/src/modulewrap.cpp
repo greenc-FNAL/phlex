@@ -1,6 +1,7 @@
 #include "phlex/module.hpp"
 #include "wrap.hpp"
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <sstream>
@@ -15,16 +16,6 @@ using namespace phlex::experimental;
 using phlex::concurrency;
 using phlex::product_query;
 
-struct PyObjectDeleter {
-  void operator()(PyObject* p) const
-  {
-    if (p && Py_IsInitialized()) {
-      phlex::experimental::PyGILRAII gil;
-      Py_DECREF(p);
-    }
-  }
-};
-using PyObjectPtr = std::shared_ptr<PyObject>;
 
 // TODO: the layer is currently hard-wired and should come from the product
 // specification instead, but that doesn't exist in Python yet.
@@ -66,12 +57,12 @@ namespace {
     return oss.str();
   }
 
-  static inline PyObject* lifeline_transform(PyObject* arg)
+  static inline PyObject* lifeline_transform(intptr_t arg)
   {
-    if (Py_TYPE(arg) == &PhlexLifeline_Type) {
+    if (Py_TYPE((PyObject*)arg) == &PhlexLifeline_Type) {
       return ((py_lifeline_t*)arg)->m_view;
     }
-    return arg;
+    return (PyObject*)arg;
   }
 
   // callable object managing the callback
@@ -108,14 +99,14 @@ namespace {
     }
 
     template <typename... Args>
-    PyObjectPtr call(Args... args)
+    intptr_t call(Args... args)
     {
       static_assert(sizeof...(Args) == N, "Argument count mismatch");
 
       PyGILRAII gil;
 
       PyObject* result = PyObject_CallFunctionObjArgs(
-        (PyObject*)m_callable, lifeline_transform(args.get())..., nullptr);
+        (PyObject*)m_callable, lifeline_transform(args)..., nullptr);
 
       std::string error_msg;
       if (!result) {
@@ -123,11 +114,13 @@ namespace {
           error_msg = "Unknown python error";
       }
 
+      decref_all(args...);
+
       if (!error_msg.empty()) {
         throw std::runtime_error(error_msg.c_str());
       }
 
-      return PyObjectPtr(result, PyObjectDeleter());
+      return (intptr_t)result;
     }
 
     template <typename... Args>
@@ -138,7 +131,7 @@ namespace {
       PyGILRAII gil;
 
       PyObject* result =
-        PyObject_CallFunctionObjArgs((PyObject*)m_callable, (PyObject*)args.get()..., nullptr);
+        PyObject_CallFunctionObjArgs((PyObject*)m_callable, (PyObject*)args..., nullptr);
 
       std::string error_msg;
       if (!result) {
@@ -147,42 +140,49 @@ namespace {
       } else
         Py_DECREF(result);
 
+      decref_all(args...);
+
       if (!error_msg.empty()) {
         throw std::runtime_error(error_msg.c_str());
       }
+    }
+
+  private:
+    template <typename... Args>
+    void decref_all(Args... args)
+    {
+      // helper to decrement reference counts of N arguments
+      (Py_XDECREF((PyObject*)args), ...);
     }
   };
 
   // use explicit instatiations to ensure that the function signature can
   // be derived by the graph builder
   struct py_callback_1 : public py_callback<1> {
-    PyObjectPtr operator()(PyObjectPtr arg0) { return call(arg0); }
+    intptr_t operator()(intptr_t arg0) { return call(arg0); }
   };
 
   struct py_callback_2 : public py_callback<2> {
-    PyObjectPtr operator()(PyObjectPtr arg0, PyObjectPtr arg1) { return call(arg0, arg1); }
+    intptr_t operator()(intptr_t arg0, intptr_t arg1) { return call(arg0, arg1); }
   };
 
   struct py_callback_3 : public py_callback<3> {
-    PyObjectPtr operator()(PyObjectPtr arg0, PyObjectPtr arg1, PyObjectPtr arg2)
+    intptr_t operator()(intptr_t arg0, intptr_t arg1, intptr_t arg2)
     {
       return call(arg0, arg1, arg2);
     }
   };
 
   struct py_callback_1v : public py_callback<1> {
-    void operator()(PyObjectPtr arg0) { callv(arg0); }
+    void operator()(intptr_t arg0) { callv(arg0); }
   };
 
   struct py_callback_2v : public py_callback<2> {
-    void operator()(PyObjectPtr arg0, PyObjectPtr arg1) { callv(arg0, arg1); }
+    void operator()(intptr_t arg0, intptr_t arg1) { callv(arg0, arg1); }
   };
 
   struct py_callback_3v : public py_callback<3> {
-    void operator()(PyObjectPtr arg0, PyObjectPtr arg1, PyObjectPtr arg2)
-    {
-      callv(arg0, arg1, arg2);
-    }
+    void operator()(intptr_t arg0, intptr_t arg1, intptr_t arg2) { callv(arg0, arg1, arg2); }
   };
 
   static std::vector<std::string> cseq(PyObject* coll)
@@ -315,16 +315,16 @@ namespace {
   }
 
 #define BASIC_CONVERTER(name, cpptype, topy, frompy)                                               \
-  static PyObjectPtr name##_to_py(cpptype a)                                                       \
+  static intptr_t name##_to_py(cpptype a)                                                          \
   {                                                                                                \
     PyGILRAII gil;                                                                                 \
-    return PyObjectPtr(topy(a), PyObjectDeleter());                                                \
+    return (intptr_t)topy(a);                                                                      \
   }                                                                                                \
                                                                                                    \
-  static cpptype py_to_##name(PyObjectPtr pyobj)                                                   \
+  static cpptype py_to_##name(intptr_t pyobj)                                                      \
   {                                                                                                \
     PyGILRAII gil;                                                                                 \
-    cpptype i = (cpptype)frompy(pyobj.get());                                                      \
+    cpptype i = (cpptype)frompy((PyObject*)pyobj);                                                 \
     if (PyErr_Occurred()) {                                                                        \
       PyObject *ptype, *pvalue, *ptraceback;                                                       \
       PyErr_Fetch(&ptype, &pvalue, &ptraceback);                                                   \
@@ -341,9 +341,10 @@ namespace {
       Py_XDECREF(ptype);                                                                           \
       Py_XDECREF(pvalue);                                                                          \
       Py_XDECREF(ptraceback);                                                                      \
+      Py_XDECREF((PyObject*)pyobj);                                                                \
       throw std::runtime_error(msg);                                                               \
     }                                                                                              \
-    pyobj.reset();                                                                                 \
+    Py_XDECREF((PyObject*)pyobj);                                                                  \
     return i;                                                                                      \
   }
 
@@ -356,7 +357,7 @@ namespace {
   BASIC_CONVERTER(double, double, PyFloat_FromDouble, PyFloat_AsDouble)
 
 #define VECTOR_CONVERTER(name, cpptype, nptype)                                                    \
-  static PyObjectPtr name##_to_py(std::shared_ptr<std::vector<cpptype>> const& v)                  \
+  static intptr_t name##_to_py(std::shared_ptr<std::vector<cpptype>> const& v)                     \
   {                                                                                                \
     PyGILRAII gil;                                                                                 \
                                                                                                    \
@@ -371,7 +372,7 @@ namespace {
     );                                                                                             \
                                                                                                    \
     if (!np_view)                                                                                  \
-      return PyObjectPtr();                                                                        \
+      return (intptr_t) nullptr;                                                                   \
                                                                                                    \
     /* make the data read-only by not making it writable */                                        \
     PyArray_CLEARFLAGS((PyArrayObject*)np_view, NPY_ARRAY_WRITEABLE);                              \
@@ -384,7 +385,7 @@ namespace {
     new (&pyll->m_source) std::shared_ptr<void>(v);                                                \
     pyll->m_view = np_view; /* steals reference */                                                 \
                                                                                                    \
-    return PyObjectPtr((PyObject*)pyll, PyObjectDeleter());                                        \
+    return (intptr_t)pyll;                                                                         \
   }
 
   VECTOR_CONVERTER(vint, int, NPY_INT)
@@ -395,19 +396,20 @@ namespace {
   VECTOR_CONVERTER(vdouble, double, NPY_DOUBLE)
 
 #define NUMPY_ARRAY_CONVERTER(name, cpptype, nptype)                                               \
-  static std::shared_ptr<std::vector<cpptype>> py_to_##name(PyObjectPtr pyobj)                     \
+  static std::shared_ptr<std::vector<cpptype>> py_to_##name(intptr_t pyobj)                        \
   {                                                                                                \
     PyGILRAII gil;                                                                                 \
                                                                                                    \
     auto vec = std::make_shared<std::vector<cpptype>>();                                           \
                                                                                                    \
     /* TODO: because of unresolved ownership issues, copy the full array contents */               \
-    if (!pyobj || !PyArray_Check(pyobj.get())) {                                                   \
+    if (!pyobj || !PyArray_Check((PyObject*)pyobj)) {                                              \
       PyErr_Clear(); /* how to report an error? */                                                 \
+      Py_XDECREF((PyObject*)pyobj);                                                                \
       return vec;                                                                                  \
     }                                                                                              \
                                                                                                    \
-    PyArrayObject* arr = (PyArrayObject*)pyobj.get();                                              \
+    PyArrayObject* arr = (PyArrayObject*)pyobj;                                                    \
                                                                                                    \
     /* TODO: flattening the array here seems to be the only workable solution */                   \
     npy_intp* dims = PyArray_DIMS(arr);                                                            \
@@ -421,14 +423,15 @@ namespace {
     vec->reserve(total);                                                                           \
     vec->insert(vec->end(), raw, raw + total);                                                     \
                                                                                                    \
+    Py_XDECREF((PyObject*)pyobj);                                                                  \
     return vec;                                                                                    \
   }
 
-  static std::shared_ptr<std::vector<int>> py_to_vint(PyObjectPtr pyobj)
+  static std::shared_ptr<std::vector<int>> py_to_vint(intptr_t pyobj)
   {
     PyGILRAII gil;
     auto vec = std::make_shared<std::vector<int>>();
-    PyObject* obj = pyobj.get();
+    PyObject* obj = (PyObject*)pyobj;
 
     if (obj) {
       if (PyList_Check(obj)) {
@@ -460,13 +463,14 @@ namespace {
         vec->insert(vec->end(), raw, raw + total);
       }
     }
+    Py_XDECREF(obj);
     return vec;
   }
-  static std::shared_ptr<std::vector<unsigned int>> py_to_vuint(PyObjectPtr pyobj)
+  static std::shared_ptr<std::vector<unsigned int>> py_to_vuint(intptr_t pyobj)
   {
     PyGILRAII gil;
     auto vec = std::make_shared<std::vector<unsigned int>>();
-    PyObject* obj = pyobj.get();
+    PyObject* obj = (PyObject*)pyobj;
 
     if (obj) {
       if (PyList_Check(obj)) {
@@ -498,13 +502,14 @@ namespace {
         vec->insert(vec->end(), raw, raw + total);
       }
     }
+    Py_XDECREF(obj);
     return vec;
   }
-  static std::shared_ptr<std::vector<long>> py_to_vlong(PyObjectPtr pyobj)
+  static std::shared_ptr<std::vector<long>> py_to_vlong(intptr_t pyobj)
   {
     PyGILRAII gil;
     auto vec = std::make_shared<std::vector<long>>();
-    PyObject* obj = pyobj.get();
+    PyObject* obj = (PyObject*)pyobj;
 
     if (obj) {
       if (PyList_Check(obj)) {
@@ -536,13 +541,14 @@ namespace {
         vec->insert(vec->end(), raw, raw + total);
       }
     }
+    Py_XDECREF(obj);
     return vec;
   }
-  static std::shared_ptr<std::vector<unsigned long>> py_to_vulong(PyObjectPtr pyobj)
+  static std::shared_ptr<std::vector<unsigned long>> py_to_vulong(intptr_t pyobj)
   {
     PyGILRAII gil;
     auto vec = std::make_shared<std::vector<unsigned long>>();
-    PyObject* obj = pyobj.get();
+    PyObject* obj = (PyObject*)pyobj;
 
     if (obj) {
       if (PyList_Check(obj)) {
@@ -574,13 +580,14 @@ namespace {
         vec->insert(vec->end(), raw, raw + total);
       }
     }
+    Py_XDECREF(obj);
     return vec;
   }
-  static std::shared_ptr<std::vector<float>> py_to_vfloat(PyObjectPtr pyobj)
+  static std::shared_ptr<std::vector<float>> py_to_vfloat(intptr_t pyobj)
   {
     PyGILRAII gil;
     auto vec = std::make_shared<std::vector<float>>();
-    PyObject* obj = pyobj.get();
+    PyObject* obj = (PyObject*)pyobj;
 
     if (obj) {
       if (PyList_Check(obj)) {
@@ -612,13 +619,14 @@ namespace {
         vec->insert(vec->end(), raw, raw + total);
       }
     }
+    Py_XDECREF(obj);
     return vec;
   }
-  static std::shared_ptr<std::vector<double>> py_to_vdouble(PyObjectPtr pyobj)
+  static std::shared_ptr<std::vector<double>> py_to_vdouble(intptr_t pyobj)
   {
     PyGILRAII gil;
     auto vec = std::make_shared<std::vector<double>>();
-    PyObject* obj = pyobj.get();
+    PyObject* obj = (PyObject*)pyobj;
 
     if (obj) {
       if (PyList_Check(obj)) {
@@ -650,6 +658,7 @@ namespace {
         vec->insert(vec->end(), raw, raw + total);
       }
     }
+    Py_XDECREF(obj);
     return vec;
   }
 
