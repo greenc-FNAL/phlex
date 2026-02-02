@@ -12,7 +12,7 @@ on:
         required: false
         type: string
       ref:
-        description: "The branch or ref to checkout"
+        description: "The branch, ref, or SHA to checkout"
         required: true
         type: string
       repo:
@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "The branch, ref, or SHA to checkout. Defaults to the repository's default branch."
+        description: "The branch, ref, or SHA to checkout. Defaults to the repository.s default branch."
         required: false
         type: string
 

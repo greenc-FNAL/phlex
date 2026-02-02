@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "The branch, ref, or SHA to checkout. Defaults to the repository's default branch."
+        description: "The branch, ref, or SHA to checkout. Defaults to the repository.s default branch."
         required: false
         type: string
       phlex-coverage-compiler:

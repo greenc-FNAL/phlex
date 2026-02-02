@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "The branch, ref, or SHA to checkout. Defaults to the repository's default branch."
+        description: "The branch, ref, or SHA to checkout. Defaults to the repository.s default branch."
         required: false
         type: string
   workflow_call:
@@ -31,6 +31,14 @@ on:
         type: string
       pr-head-sha:
         description: "Head SHA of the PR for relevance check"
+        required: false
+        type: string
+      ref:
+        description: "The branch, ref, or SHA to checkout"
+        required: false
+        type: string
+      repo:
+        description: "The repository to checkout from"
         required: false
         type: string
 
@@ -65,6 +73,7 @@ jobs:
       with:
         fetch-depth: 0
         path: ${{ env.local_checkout_path }}
+        repository: ${{ (github.event_name == 'workflow_call' && inputs.repo) || github.repository }}
 
     - name: Detect Python changes
       id: filter
@@ -101,8 +110,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-        ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.ref }}
+        ref: ${{ (github.event_name == 'workflow_call' && (inputs.ref || inputs.pr-head-sha)) || (github.event_name == 'workflow_dispatch' && github.event.inputs.ref) || github.ref }}
         path: ${{ env.local_checkout_path }}
+        repository: ${{ (github.event_name == 'workflow_call' && inputs.repo) || github.repository }}
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
