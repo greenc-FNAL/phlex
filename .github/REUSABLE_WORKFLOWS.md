@@ -97,8 +97,8 @@ jobs:
 - `build-path` (string, optional): Path for build artifacts.
 - `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs the build if C++ or CMake files have changed.
 - `build-combinations` (string, optional): A space-separated list of build combinations to run.
-- `ref` (string, optional): The branch or ref to check out.
-- `repo` (string, optional): The repository to check out from (e.g., `my-org/my-repo`).
+- `ref` (string, optional): The branch, ref, or SHA to check out.
+- `repo` (string, optional): The repository to check out from.
 - `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
 - `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
 
@@ -154,7 +154,7 @@ jobs:
 #### All Inputs
 
 - `checkout-path` (string, optional): Path to check out code to.
-- `ref` (string, **required**): The branch or ref to check out.
+- `ref` (string, **required**): The branch, ref, or SHA to check out.
 - `repo` (string, **required**): The repository to check out from.
 
 ### 4. `python-check.yaml`
@@ -207,8 +207,8 @@ jobs:
 #### All Inputs
 
 - `checkout-path` (string, optional): Path to check out code to.
-- `ref` (string, **required**): The branch or ref to check out.
-- `repo` (string, **required**): The repository to checkout from.
+- `ref` (string, **required**): The branch, ref, or SHA to check out.
+- `repo` (string, **required**): The repository to check out from.
 
 ### 6. `markdown-check.yaml`
 
@@ -228,8 +228,8 @@ jobs:
 - `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Markdown files have changed. Note that this workflow automatically emulates the trigger type of the caller; it will run relevance checks if called from a `pull_request` or `push` event, and skip them (running on all files) otherwise.
 - `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
 - `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
-- `ref` (string, optional): The branch, ref, or SHA to checkout.
-- `repo` (string, optional): The repository to checkout from.
+- `ref` (string, optional): The branch, ref, or SHA to check out.
+- `repo` (string, optional): The repository to check out from.
 
 ### 7. `markdown-fix.yaml`
 
@@ -265,8 +265,8 @@ jobs:
 #### All Inputs
 
 - `checkout-path` (string, optional): Path to check out code to.
-- `ref` (string, **required**): The branch or ref to check out.
-- `repo` (string, **required**): The repository to checkout from.
+- `ref` (string, **required**): The branch, ref, or SHA to check out.
+- `repo` (string, **required**): The repository to check out from.
 
 ### 8. `actionlint-check.yaml`
 
@@ -307,3 +307,7 @@ jobs:
 - `pr-number` (string, optional): PR number if run in PR context.
 - `pr-head-repo` (string, optional): The full name of the PR head repository.
 - `pr-base-repo` (string, optional): The full name of the PR base repository.
+
+### Other Workflows
+
+The repository also provides `clang-format-check.yaml`, `clang-format-fix.yaml`, `clang-tidy-check.yaml`, and `clang-tidy-fix.yaml`, which can be used in a similar manner.
