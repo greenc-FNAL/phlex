@@ -2,7 +2,7 @@
 
 ## Overview and General Instructions
 
-The workflows in `Framework-R-D/phlex/` maybe invoked as follows:
+The workflows in `Framework-R-D/phlex/` may be invoked as follows:
 
 1. Automatically as part of CI checks on a PR submitted to `Framework-R-D/phlex`, at PR creation time and thereafter on pushes to the PR branch. This should work whether your PR branch is situated in the primary repository or a fork.
 1. Via triggering comments on the PR (`@phlexbot <action>`).
@@ -102,22 +102,22 @@ jobs:
 - `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
 - `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
 
-### 2. `python-check.yaml`
+### 2. `cmake-format-check.yaml`
 
-Checks Python code for formatting and type errors using `ruff` and `mypy`.
+Checks CMake files for formatting issues using `gersemi`.
 
 #### Usage Example
 
 ```yaml
 jobs:
-  check_python:
-    uses: Framework-R-D/phlex/.github/workflows/python-check.yaml@cef968c52aab432b836bb28119a9661c82c8b0d1
+  check_cmake_format:
+    uses: Framework-R-D/phlex/.github/workflows/cmake-format-check.yaml@cef968c52aab432b836bb28119a9661c82c8b0d1
 ```
 
 #### All Inputs
 
 - `checkout-path` (string, optional): Path to check out code to.
-- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Python files have changed.
+- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if CMake files have changed.
 - `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
 - `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
 
@@ -125,7 +125,7 @@ jobs:
 
 Automatically formats CMake files using `gersemi` and commits the changes. Typically triggered by an `issue_comment`.
 
-#### Usage Example (in a workflow triggered by `issue_comment`)
+#### Usage Example
 
 ```yaml
 name: 'Bot Commands'
@@ -157,33 +157,58 @@ jobs:
 - `ref` (string, **required**): The branch or ref to check out.
 - `repo` (string, **required**): The repository to check out from.
 
-### 4. `python-fix.yaml`
+### 4. `python-check.yaml`
+
+Checks Python code for formatting and type errors using `ruff` and `mypy`.
+
+#### Usage Example
+
+```yaml
+jobs:
+  check_python:
+    uses: Framework-R-D/phlex/.github/workflows/python-check.yaml@cef968c52aab432b836bb28119a9661c82c8b0d1
+```
+
+#### All Inputs
+
+- `checkout-path` (string, optional): Path to check out code to.
+- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Python files have changed.
+- `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
+- `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
+
+### 5. `python-fix.yaml`
 
 Automatically formats and fixes Python code using `ruff` and commits the changes. Typically triggered by an `issue_comment`.
 
-#### Usage Example (in a workflow triggered by `issue_comment`)
+#### Usage Example
 
-*Similar to `cmake-format-fix.yaml`, but triggered by a command like `@<repo>bot python-fix`.*
+```yaml
+name: 'Bot Commands'
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  fix-python:
+    # Run only on comments from collaborators/owners that start with the bot command
+    if: >
+      github.event.issue.pull_request &&
+      (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') &&
+      startsWith(github.event.comment.body, format('@{0}bot python-fix', github.event.repository.name))
+    uses: Framework-R-D/phlex/.github/workflows/python-fix.yaml@cef968c52aab432b836bb28119a9661c82c8b0d1
+    with:
+      # The ref and repo of the PR need to be retrieved and passed
+      ref: ${{ steps.get_pr_info.outputs.ref }}
+      repo: ${{ steps.get_pr_info.outputs.repo }}
+    secrets:
+      WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+```
 
 #### All Inputs
 
 - `checkout-path` (string, optional): Path to check out code to.
 - `ref` (string, **required**): The branch or ref to check out.
-- `repo` (string, **required**): The repository to check out from.
-
-### 5. `markdown-fix.yaml`
-
-Automatically formats Markdown files using `markdownlint` and commits the changes. Typically triggered by an `issue_comment`.
-
-#### Usage Example: `markdown-fix.yaml` (in a workflow triggered by `issue_comment`)
-
-*Similar to `cmake-format-fix.yaml`, but triggered by a command like `@<repo>bot markdown-fix`.*
-
-#### All Inputs: `markdown-fix.yaml`
-
-- `checkout-path` (string, optional): Path to check out code to.
-- `ref` (string, **required**): The branch or ref to check out.
-- `repo` (string, **required**): The repository to check out from.
+- `repo` (string, **required**): The repository to checkout from.
 
 ### 6. `markdown-check.yaml`
 
@@ -206,6 +231,79 @@ jobs:
 - `ref` (string, optional): The branch, ref, or SHA to checkout.
 - `repo` (string, optional): The repository to checkout from.
 
-### Other Workflows
+### 7. `markdown-fix.yaml`
 
-The repository also provides `actionlint-check.yaml`, `cmake-format-check.yaml`, and `codeql-analysis.yaml`, which can be used in a similar manner.
+Automatically formats Markdown files using `markdownlint` and commits the changes. Typically triggered by an `issue_comment`.
+
+#### Usage Example
+
+```yaml
+name: 'Bot Commands'
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  fix-markdown:
+    # Run only on comments from collaborators/owners that start with the bot command
+    if: >
+      github.event.issue.pull_request &&
+      (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') &&
+      (
+        startsWith(github.event.comment.body, format('@{0}bot format', github.event.repository.name)) ||
+        startsWith(github.event.comment.body, format('@{0}bot markdown-fix', github.event.repository.name))
+      )
+    uses: Framework-R-D/phlex/.github/workflows/markdown-fix.yaml@cef968c52aab432b836bb28119a9661c82c8b0d1
+    with:
+      # The ref and repo of the PR need to be retrieved and passed
+      ref: ${{ steps.get_pr_info.outputs.ref }}
+      repo: ${{ steps.get_pr_info.outputs.repo }}
+    secrets:
+      WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+```
+
+#### All Inputs
+
+- `checkout-path` (string, optional): Path to check out code to.
+- `ref` (string, **required**): The branch or ref to check out.
+- `repo` (string, **required**): The repository to checkout from.
+
+### 8. `actionlint-check.yaml`
+
+Checks GitHub Actions workflow files for errors and best practices using `actionlint`.
+
+#### Usage Example
+
+```yaml
+jobs:
+  check_actions:
+    uses: Framework-R-D/phlex/.github/workflows/actionlint-check.yaml@cef968c52aab432b836bb28119a9661c82c8b0d1
+```
+
+#### All Inputs
+
+- `checkout-path` (string, optional): Path to check out code to.
+- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if workflow files have changed.
+- `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
+- `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
+
+### 9. `codeql-analysis.yaml`
+
+Performs static analysis on the codebase using GitHub CodeQL to identify potential security vulnerabilities and coding errors.
+
+#### Usage Example
+
+```yaml
+jobs:
+  analyze:
+    uses: Framework-R-D/phlex/.github/workflows/codeql-analysis.yaml@cef968c52aab432b836bb28119a9661c82c8b0d1
+```
+
+#### All Inputs
+
+- `checkout-path` (string, optional): Path to check out code to.
+- `build-path` (string, optional): Path for build artifacts.
+- `language-matrix` (string, optional, default: `'["cpp", "python", "actions"]'`): JSON array of languages to analyze.
+- `pr-number` (string, optional): PR number if run in PR context.
+- `pr-head-repo` (string, optional): The full name of the PR head repository.
+- `pr-base-repo` (string, optional): The full name of the PR base repository.
