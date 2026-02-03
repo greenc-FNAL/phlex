@@ -53,7 +53,7 @@ The script automatically detects and adapts to:
 Configure the script behavior by setting these variables **before** sourcing:
 
 | Variable | Description | Example |
-|----------|-------------|---------|
+| :--- | :--- | :--- |
 | `PHLEX_SPACK_ROOT` | Path to Spack installation | `export PHLEX_SPACK_ROOT=/opt/spack` |
 | `PHLEX_SPACK_ENV` | Spack environment to activate | `export PHLEX_SPACK_ENV=phlex-dev` |
 | `PHLEX_BUILD_DIR` | Build directory location | `export PHLEX_BUILD_DIR=/tmp/phlex-build` |
@@ -156,16 +156,31 @@ Provides convenient commands for managing code coverage analysis.
 
 ```bash
 # From repository root
-./scripts/coverage.sh [COMMAND] [COMMAND...]
+./scripts/coverage.sh [--preset <coverage-clang|coverage-gcc>] [COMMAND] [COMMAND...]
 
 # Multiple commands in sequence
 ./scripts/coverage.sh setup test xml html
 ```
 
+#### Presets
+
+The `--preset` flag controls the toolchain and instrumentation method:
+
+- **`coverage-clang`** (Default):
+  - Uses LLVM source-based coverage.
+  - Best for local development (fast, accurate).
+  - Generates high-fidelity HTML reports.
+  - Key commands: `setup`, `test`, `html`, `view`, `summary`.
+
+- **`coverage-gcc`**:
+  - Uses `gcov` instrumentation.
+  - Best for CI pipelines requiring XML output (e.g., Codecov).
+  - Key commands: `setup`, `test`, `xml`, `upload`.
+
 #### Commands
 
 | Command | Description |
-|---------|-------------|
+| :--- | :--- |
 | `setup` | Configure and build with coverage instrumentation |
 | `clean` | Remove coverage data files (C++ and Python) |
 | `test` | Run tests with coverage collection (C++ and Python) |

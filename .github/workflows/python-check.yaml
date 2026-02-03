@@ -9,6 +9,11 @@ on:
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: "The branch, ref, or SHA to checkout. Defaults to the repository's default branch."
+        required: false
+        type: string
   workflow_call:
     inputs:
       checkout-path:
@@ -30,7 +35,7 @@ on:
         type: string
 
 env:
-  local-checkout-path: ${{ (github.event_name == 'workflow_call' && inputs.checkout-path) || format('{0}-src', github.event.repository.name) }}
+  local_checkout_path: ${{ (github.event_name == 'workflow_call' && inputs.checkout-path) || format('{0}-src', github.event.repository.name) }}
 
 jobs:
   pre-check:
@@ -56,16 +61,16 @@ jobs:
       has_changes: ${{ steps.filter.outputs.matched }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
-        path: ${{ env.local-checkout-path }}
+        path: ${{ env.local_checkout_path }}
 
     - name: Detect Python changes
       id: filter
       uses: Framework-R-D/phlex/.github/actions/detect-relevant-changes@main
       with:
-        repo-path: ${{ env.local-checkout-path }}
+        repo-path: ${{ env.local_checkout_path }}
         base-ref: ${{ (github.event_name == 'workflow_call' && inputs.pr-base-sha) || github.event.pull_request.base.sha || github.event.before }}
         head-ref: ${{ (github.event_name == 'workflow_call' && inputs.pr-head-sha) || github.event.pull_request.head.sha || github.sha }}
         file-type: python
@@ -83,22 +88,24 @@ jobs:
   python-check:
     needs: [pre-check, detect-changes]
     if: >
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_call' && inputs.skip-relevance-check == 'true') ||
-      needs.pre-check.outputs.is_act == 'true' ||
-      (needs.detect-changes.result == 'success' && needs.detect-changes.outputs.has_changes == 'true')
+      needs.detect-changes.result == 'skipped' ||
+      (
+        needs.detect-changes.result == 'success' &&
+        needs.detect-changes.outputs.has_changes == 'true'
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-        path: ${{ env.local-checkout-path }}
+        ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.ref }}
+        path: ${{ env.local_checkout_path }}
 
     - name: Set up Python
-      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '3.x'
 
@@ -107,7 +114,7 @@ jobs:
         pip install ruff mypy
 
     - name: Run ruff and mypy checks
-      working-directory: ${{ env.local-checkout-path }}
+      working-directory: ${{ env.local_checkout_path }}
       env:
         FORCE_COLOR: 1  # `ruff`/`colored` crate
       run: |
