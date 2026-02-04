@@ -159,8 +159,11 @@ jobs:
     # Extract PR details for the comment trigger
     if: >
       github.event.issue.pull_request &&
-      contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association) &&
-      startsWith(github.event.comment.body, format('@{0}bot format', github.event.repository.name))
+      contains(fromJSON('["OWNER", "COLLABORATOR", "MEMBER"]'), github.event.comment.author_association) &&
+      (
+        startsWith(github.event.comment.body, format('@{0}bot format', github.event.repository.name)) ||
+        startsWith(github.event.comment.body, format('@{0}bot cmake-fix', github.event.repository.name))
+      )
     runs-on: ubuntu-latest
     outputs:
       ref: ${{ steps.pr_info.outputs.ref }}
@@ -222,7 +225,7 @@ jobs:
   pre-check:
     if: >
       github.event.issue.pull_request &&
-      contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+      contains(fromJSON('["OWNER", "COLLABORATOR", "MEMBER"]'), github.event.comment.author_association) &&
       startsWith(github.event.comment.body, format('@{0}bot python-fix', github.event.repository.name))
     runs-on: ubuntu-latest
     outputs:
@@ -285,7 +288,7 @@ jobs:
   pre-check:
     if: >
       github.event.issue.pull_request &&
-      contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+      contains(fromJSON('["OWNER", "COLLABORATOR", "MEMBER"]'), github.event.comment.author_association) &&
       (
         startsWith(github.event.comment.body, format('@{0}bot format', github.event.repository.name)) ||
         startsWith(github.event.comment.body, format('@{0}bot markdown-fix', github.event.repository.name))
@@ -375,10 +378,10 @@ jobs:
   pre-check:
     if: >
       github.event.issue.pull_request &&
-      contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+      contains(fromJSON('["OWNER", "COLLABORATOR", "MEMBER"]'), github.event.comment.author_association) &&
       (
         startsWith(github.event.comment.body, format('@{0}bot format', github.event.repository.name)) ||
-        startsWith(github.event.comment.body, format('@{0}bot jsonnet-format-fix', github.event.repository.name))
+        startsWith(github.event.comment.body, format('@{0}bot jsonnet-fix', github.event.repository.name))
       )
     runs-on: ubuntu-latest
     outputs:

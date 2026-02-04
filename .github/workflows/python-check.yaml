@@ -152,7 +152,10 @@ jobs:
           echo "✅ MyPy check passed."
         fi
 
-        exit $failed
+        if [ $failed -ne 0 ]; then
+          echo "::error::Python checks failed. Comment '@${{ github.event.repository.name }}bot python-fix' on the PR to attempt auto-fix."
+          exit 1
+        fi
 
   python-check-skipped:
     needs: [pre-check, detect-changes]
