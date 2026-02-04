@@ -137,6 +137,8 @@ jobs:
 
 - `checkout-path` (string, optional): Path to check out code to.
 - `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if CMake files have changed.
+- `ref` (string, optional): The branch, ref, or SHA to check out.
+- `repo` (string, optional): The repository to check out from.
 - `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
 - `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
 
@@ -153,22 +155,29 @@ on:
     types: [created]
 
 jobs:
-  format-cmake:
-    # Run only on comments from collaborators/owners that start with the bot command
+  pre-check:
+    # Extract PR details for the comment trigger
     if: >
       github.event.issue.pull_request &&
-      (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') &&
+      contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association) &&
       startsWith(github.event.comment.body, format('@{0}bot format', github.event.repository.name))
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.pr_info.outputs.ref }}
+      repo: ${{ steps.pr_info.outputs.repo }}
+    steps:
+      - id: pr_info
+        uses: Framework-R-D/phlex/.github/actions/get-pr-info@<commit_sha>
+
+  format-cmake:
+    needs: pre-check
     uses: Framework-R-D/phlex/.github/workflows/cmake-format-fix.yaml@<commit_sha>
     with:
-      # The ref and repo of the PR need to be retrieved and passed
-      ref: ${{ steps.get_pr_info.outputs.ref }}
-      repo: ${{ steps.get_pr_info.outputs.repo }}
+      ref: ${{ needs.pre-check.outputs.ref }}
+      repo: ${{ needs.pre-check.outputs.repo }}
     secrets:
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
 ```
-
-*Note: You would need a preliminary step (`get_pr_info`) to extract the PR's `ref` and `repo` from the `issue_comment` event.*
 
 #### All Inputs
 
@@ -192,6 +201,8 @@ jobs:
 
 - `checkout-path` (string, optional): Path to check out code to.
 - `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Python files have changed.
+- `ref` (string, optional): The branch, ref, or SHA to check out.
+- `repo` (string, optional): The repository to check out from.
 - `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
 - `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
 
@@ -208,17 +219,25 @@ on:
     types: [created]
 
 jobs:
-  fix-python:
-    # Run only on comments from collaborators/owners that start with the bot command
+  pre-check:
     if: >
       github.event.issue.pull_request &&
-      (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') &&
+      contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association) &&
       startsWith(github.event.comment.body, format('@{0}bot python-fix', github.event.repository.name))
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.pr_info.outputs.ref }}
+      repo: ${{ steps.pr_info.outputs.repo }}
+    steps:
+      - id: pr_info
+        uses: Framework-R-D/phlex/.github/actions/get-pr-info@<commit_sha>
+
+  fix-python:
+    needs: pre-check
     uses: Framework-R-D/phlex/.github/workflows/python-fix.yaml@<commit_sha>
     with:
-      # The ref and repo of the PR need to be retrieved and passed
-      ref: ${{ steps.get_pr_info.outputs.ref }}
-      repo: ${{ steps.get_pr_info.outputs.repo }}
+      ref: ${{ needs.pre-check.outputs.ref }}
+      repo: ${{ needs.pre-check.outputs.repo }}
     secrets:
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
 ```
@@ -263,20 +282,28 @@ on:
     types: [created]
 
 jobs:
-  fix-markdown:
-    # Run only on comments from collaborators/owners that start with the bot command
+  pre-check:
     if: >
       github.event.issue.pull_request &&
-      (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'OWNER') &&
+      contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association) &&
       (
         startsWith(github.event.comment.body, format('@{0}bot format', github.event.repository.name)) ||
         startsWith(github.event.comment.body, format('@{0}bot markdown-fix', github.event.repository.name))
       )
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.pr_info.outputs.ref }}
+      repo: ${{ steps.pr_info.outputs.repo }}
+    steps:
+      - id: pr_info
+        uses: Framework-R-D/phlex/.github/actions/get-pr-info@<commit_sha>
+
+  fix-markdown:
+    needs: pre-check
     uses: Framework-R-D/phlex/.github/workflows/markdown-fix.yaml@<commit_sha>
     with:
-      # The ref and repo of the PR need to be retrieved and passed
-      ref: ${{ steps.get_pr_info.outputs.ref }}
-      repo: ${{ steps.get_pr_info.outputs.repo }}
+      ref: ${{ needs.pre-check.outputs.ref }}
+      repo: ${{ needs.pre-check.outputs.repo }}
     secrets:
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
 ```
@@ -303,10 +330,81 @@ jobs:
 
 - `checkout-path` (string, optional): Path to check out code to.
 - `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if workflow files have changed.
+- `ref` (string, optional): The branch, ref, or SHA to check out.
+- `repo` (string, optional): The repository to check out from.
 - `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
 - `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
 
-### 9. `codeql-analysis.yaml`
+### 9. `jsonnet-format-check.yaml`
+
+Checks Jsonnet files for formatting issues using `jsonnetfmt`.
+
+#### Usage Example
+
+```yaml
+jobs:
+  check_jsonnet:
+    uses: Framework-R-D/phlex/.github/workflows/jsonnet-format-check.yaml@<commit_sha>
+    with:
+      # Optional: bypass detection and check all files (useful for manual triggers)
+      skip-relevance-check: ${{ github.event_name == 'workflow_dispatch' }}
+```
+
+#### All Inputs
+
+- `checkout-path` (string, optional): Path to check out code to.
+- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Jsonnet files have changed.
+- `ref` (string, optional): The branch, ref, or SHA to checkout.
+- `repo` (string, optional): The repository to checkout from.
+- `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
+- `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
+
+### 10. `jsonnet-format-fix.yaml`
+
+Automatically formats Jsonnet files using `jsonnetfmt` and commits the changes. Typically triggered by an `issue_comment`.
+
+#### Usage Example
+
+```yaml
+name: 'Bot Commands'
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  pre-check:
+    if: >
+      github.event.issue.pull_request &&
+      contains(fromJSON('["OWNER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+      (
+        startsWith(github.event.comment.body, format('@{0}bot format', github.event.repository.name)) ||
+        startsWith(github.event.comment.body, format('@{0}bot jsonnet-format-fix', github.event.repository.name))
+      )
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.pr_info.outputs.ref }}
+      repo: ${{ steps.pr_info.outputs.repo }}
+    steps:
+      - id: pr_info
+        uses: Framework-R-D/phlex/.github/actions/get-pr-info@<commit_sha>
+
+  fix-jsonnet:
+    needs: pre-check
+    uses: Framework-R-D/phlex/.github/workflows/jsonnet-format-fix.yaml@<commit_sha>
+    with:
+      ref: ${{ needs.pre-check.outputs.ref }}
+      repo: ${{ needs.pre-check.outputs.repo }}
+    secrets:
+      WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+```
+
+#### All Inputs
+
+- `checkout-path` (string, optional): Path to check out code to.
+- `ref` (string, **required**): The branch, ref, or SHA to checkout.
+- `repo` (string, **required**): The repository to checkout from.
+
+### 11. `codeql-analysis.yaml`
 
 Performs static analysis on the codebase using GitHub CodeQL to identify potential security vulnerabilities and coding errors.
 
@@ -326,44 +424,6 @@ jobs:
 - `pr-number` (string, optional): PR number if run in PR context.
 - `pr-head-repo` (string, optional): The full name of the PR head repository.
 - `pr-base-repo` (string, optional): The full name of the PR base repository.
-
-### 5. `jsonnet-format-check.yaml`
-
-Checks Jsonnet files for formatting issues using `jsonnetfmt`.
-
-#### Usage Example
-
-```yaml
-jobs:
-  check_jsonnet:
-    uses: Framework-R-D/phlex/.github/workflows/jsonnet-format-check.yaml@<commit_sha>
-    with:
-      # Optional: bypass detection and check all files (useful for manual triggers)
-      skip-relevance-check: ${{ github.event_name == 'workflow_dispatch' }}
-```
-
-#### All Inputs
-
-- `checkout-path` (string, optional): Path to check out code to.
-- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Jsonnet files have changed.
-- `ref` (string, optional): The branch or ref to check out.
-- `repo` (string, optional): The repository to check out from.
-- `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
-- `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
-
-### 6. `jsonnet-format-fix.yaml`
-
-Automatically formats Jsonnet files using `jsonnetfmt` and commits the changes. Typically triggered by an `issue_comment`.
-
-#### Usage Example
-
-*Similar to `cmake-format-fix.yaml`, but triggered by a command like `@<repo>bot jsonnet-format-fix`.*
-
-#### All Inputs
-
-- `checkout-path` (string, optional): Path to check out code to.
-- `ref` (string, **required**): The branch or ref to check out.
-- `repo` (string, **required**): The repository to check out from.
 
 ### Other Workflows
 

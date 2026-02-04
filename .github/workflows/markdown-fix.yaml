@@ -12,7 +12,7 @@ on:
         required: false
         type: string
       ref:
-        description: "The branch or ref to checkout"
+        description: "The branch, ref, or SHA to checkout"
         required: true
         type: string
       repo:

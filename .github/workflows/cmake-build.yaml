@@ -45,7 +45,7 @@ on:
         required: false
         type: string
       ref:
-        description: "The branch or ref to checkout"
+        description: "The branch, ref, or SHA to checkout"
         required: false
         type: string
       repo:
@@ -141,6 +141,7 @@ jobs:
         with:
           fetch-depth: 0
           path: ${{ env.local_checkout_path }}
+          repository: ${{ (github.event_name == 'workflow_call' && inputs.repo) || github.repository }}
 
       - name: Detect C++ and CMake changes
         id: filter
