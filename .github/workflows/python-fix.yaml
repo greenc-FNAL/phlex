@@ -90,7 +90,7 @@ jobs:
       - name: Handle fix commit
         uses: Framework-R-D/phlex/.github/actions/handle-fix-commit@main
         with:
-          tool: 'Python linting'
+          tool: ruff
           working-directory: ${{ env.local_checkout_path }}
           token: ${{ secrets.WORKFLOW_PAT }}
           pr-info-ref: ${{ needs.pre-check.outputs.ref }}

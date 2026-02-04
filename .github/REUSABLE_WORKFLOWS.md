@@ -29,7 +29,7 @@ To run a workflow manually:
 
 If you are developing on a fork of `Framework-R-D/phlex` itself, the CI/CD workflows will run automatically on your pull requests within the fork, just as they do on the main repository. You do not need to use the `uses:` syntax described below.
 
-However, to enable the automatic fixing features (e.g., for `cmake-format-fix` or `python-fix`), you will need to perform two steps:
+However, to enable the automatic fixing features (e.g., for `cmake-fix` or `python-fix`), you will need to perform two steps:
 
 1. **Enable Workflows:** By default, GitHub Actions are disabled on forks. You must manually enable them by going to the `Actions` tab of your forked repository and clicking the "I understand my workflows, go ahead and enable them" button.
 1. **Create the `WORKFLOW_PAT` Secret:** The auto-fix workflows require a Personal Access Token (PAT) with write permissions to commit changes back to your PR branch. Follow the instructions below to create a PAT and add it as a secret named `WORKFLOW_PAT` **to your forked repository's settings**.
@@ -266,11 +266,11 @@ jobs:
 #### All Inputs
 
 - `checkout-path` (string, optional): Path to check out code to.
-- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Markdown files have changed. Note that this workflow automatically emulates the trigger type of the caller; it will run relevance checks if called from a `pull_request` or `push` event, and skip them (running on all files) otherwise.
-- `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
-- `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
+- `skip-relevance-check` (boolean, optional, default: `false`): Bypass the check that only runs if Markdown files have changed.
 - `ref` (string, optional): The branch, ref, or SHA to check out.
 - `repo` (string, optional): The repository to check out from.
+- `pr-base-sha` (string, optional): Base SHA of the PR for relevance check.
+- `pr-head-sha` (string, optional): Head SHA of the PR for relevance check.
 
 ### 7. `markdown-fix.yaml`
 
@@ -287,6 +287,7 @@ on:
 jobs:
   pre-check:
     if: >
+      github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       contains(fromJSON('["OWNER", "COLLABORATOR", "MEMBER"]'), github.event.comment.author_association) &&
       (

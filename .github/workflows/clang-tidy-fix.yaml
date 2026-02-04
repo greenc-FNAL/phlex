@@ -1,5 +1,5 @@
 name: Clang-Tidy Fix
-'run-name': "${{ github.actor }} applying clang-tidy fixes"
+'run-name': "${{ github.actor }} fixing C++ code with clang-tidy"
 
 on:
   issue_comment:
@@ -101,7 +101,7 @@ jobs:
           retention-days: 7
 
       - name: Handle fix commit
-        uses: ./phlex-src/.github/actions/handle-fix-commit
+        uses: Framework-R-D/phlex/.github/actions/handle-fix-commit@main
         with:
           tool: clang-tidy
           working-directory: phlex-src
