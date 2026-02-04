@@ -46,7 +46,7 @@ jobs:
         contains(fromJSON('["OWNER", "COLLABORATOR", "MEMBER"]'), github.event.comment.author_association) &&
         (
           startsWith(github.event.comment.body, format('@{0}bot format', github.event.repository.name)) ||
-          startsWith(github.event.comment.body, format('@{0}bot jsonnet-format-fix', github.event.repository.name))
+          startsWith(github.event.comment.body, format('@{0}bot jsonnet-fix', github.event.repository.name))
         )
       )
     outputs:
