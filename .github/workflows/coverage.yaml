@@ -21,32 +21,6 @@ on:
         description: 'Enable FORM integration (set to OFF to exclude FORM sources)'
         required: false
         default: 'ON'
-  workflow_call:
-    inputs:
-      ref:
-        description: "The branch, ref, or SHA to checkout"
-        required: false
-        type: string
-      repo:
-        description: "The repository to checkout from"
-        required: false
-        type: string
-      pr-base-sha:
-        description: "Base SHA of the PR for relevance check"
-        required: false
-        type: string
-      pr-head-sha:
-        description: "Head SHA of the PR for relevance check"
-        required: false
-        type: string
-      phlex-coverage-compiler:
-        description: 'Compiler to use for coverage build (gcc or clang)'
-        required: false
-        type: string
-      phlex-enable-form:
-        description: 'Enable FORM integration (set to OFF to exclude FORM sources)'
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -57,9 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       is_act: ${{ steps.detect_act.outputs.is_act }}
-      ref: ${{ (github.event_name == 'workflow_call' && inputs.ref) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.ref || github.ref)) || github.sha }}
-      repo: ${{ (github.event_name == 'workflow_call' && inputs.repo) || github.repository }}
-      base_sha: ${{ (github.event_name == 'workflow_call' && inputs.pr-base-sha) || github.event.pull_request.base.sha || github.event.before }}
+      ref: ${{ (github.event_name == 'workflow_dispatch' && (github.event.inputs.ref || github.ref)) || github.sha }}
+      repo: ${{ github.repository }}
+      base_sha: ${{ github.event.pull_request.base.sha || github.event.before }}
     steps:
       - name: Detect act environment
         id: detect_act

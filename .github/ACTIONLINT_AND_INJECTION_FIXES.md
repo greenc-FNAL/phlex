@@ -6,9 +6,9 @@ This document describes the actionlint errors and injection vulnerabilities that
 
 ## Issues Identified
 
-### 1. Actionlint Errors: Missing workflow_call Inputs
+### 1. Actionlint Errors: Incorrect workflow_call References
 
-Three workflows were referencing `inputs.repo` and `inputs.pr-base-sha` without defining them in their `workflow_call` trigger inputs:
+Three workflows were referencing `inputs.repo` and `inputs.pr-base-sha` in conditional expressions, but these workflows were not intended to support `workflow_call`:
 
 - `.github/workflows/clang-format-check.yaml`
 - `.github/workflows/clang-tidy-check.yaml`
@@ -20,7 +20,7 @@ property "repo" is not defined in object type {ref: string}
 property "pr-base-sha" is not defined in object type {ref: string}
 ```
 
-**Root Cause:** These workflows had logic to handle `workflow_call` events (e.g., `github.event_name == 'workflow_call' && inputs.repo`) but didn't declare the `workflow_call` trigger with the required inputs.
+**Root Cause:** These workflows had logic to handle `workflow_call` events (e.g., `github.event_name == 'workflow_call' && inputs.repo`) from a previous AI task, but these workflows were never intended to be reusable. According to the repository documentation, these workflows are "specifically intended for use on this repository and its forks" and should not support `workflow_call`.
 
 ### 2. Injection Vulnerability in cmake-build.yaml
 
@@ -36,42 +36,31 @@ run: echo "name=$(echo '${{ needs.pre-check.outputs.repo }}' | sed 's:.*/::')" >
 
 ## Fixes Applied
 
-### Fix 1: Add workflow_call Inputs
+### Fix 1: Remove Incorrect workflow_call Support
 
-Added `workflow_call` trigger with required inputs to all three workflows:
+Removed the `workflow_call` trigger and simplified the output expressions in three workflows that were not intended to be reusable:
 
+**Changes in clang-format-check.yaml, clang-tidy-check.yaml, and coverage.yaml:**
+
+Removed the entire `workflow_call:` section with all its inputs, and simplified the pre-check job outputs:
+
+**Before:**
 ```yaml
-workflow_call:
-  inputs:
-    ref:
-      description: "The branch, ref, or SHA to checkout"
-      required: false
-      type: string
-    repo:
-      description: "The repository to checkout from"
-      required: false
-      type: string
-    pr-base-sha:
-      description: "Base SHA of the PR for relevance check"
-      required: false
-      type: string
-    pr-head-sha:
-      description: "Head SHA of the PR for relevance check"
-      required: false
-      type: string
+outputs:
+  ref: ${{ (github.event_name == 'workflow_call' && inputs.ref) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.ref || github.ref)) || github.sha }}
+  repo: ${{ (github.event_name == 'workflow_call' && inputs.repo) || github.repository }}
+  base_sha: ${{ (github.event_name == 'workflow_call' && inputs.pr-base-sha) || github.event.pull_request.base.sha || github.event.before }}
 ```
 
-For `coverage.yaml`, also added the coverage-specific inputs:
+**After:**
 ```yaml
-    phlex-coverage-compiler:
-      description: 'Compiler to use for coverage build (gcc or clang)'
-      required: false
-      type: string
-    phlex-enable-form:
-      description: 'Enable FORM integration (set to OFF to exclude FORM sources)'
-      required: false
-      type: string
+outputs:
+  ref: ${{ (github.event_name == 'workflow_dispatch' && (github.event.inputs.ref || github.ref)) || github.sha }}
+  repo: ${{ github.repository }}
+  base_sha: ${{ github.event.pull_request.base.sha || github.event.before }}
 ```
+
+The workflows now only support `pull_request` and `workflow_dispatch` triggers, as originally intended.
 
 ### Fix 2: Mitigate Injection Vulnerability
 
