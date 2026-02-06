@@ -21,6 +21,32 @@ on:
         description: 'Enable FORM integration (set to OFF to exclude FORM sources)'
         required: false
         default: 'ON'
+  workflow_call:
+    inputs:
+      ref:
+        description: "The branch, ref, or SHA to checkout"
+        required: false
+        type: string
+      repo:
+        description: "The repository to checkout from"
+        required: false
+        type: string
+      pr-base-sha:
+        description: "Base SHA of the PR for relevance check"
+        required: false
+        type: string
+      pr-head-sha:
+        description: "Head SHA of the PR for relevance check"
+        required: false
+        type: string
+      phlex-coverage-compiler:
+        description: 'Compiler to use for coverage build (gcc or clang)'
+        required: false
+        type: string
+      phlex-enable-form:
+        description: 'Enable FORM integration (set to OFF to exclude FORM sources)'
+        required: false
+        type: string
 
 permissions:
   contents: read
