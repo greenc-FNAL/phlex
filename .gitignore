@@ -45,4 +45,4 @@ __pycache__/
 .DS_Store
 # act (local workflow testing)
 .act-artifacts/
-.secrets
+.secretsactionlint
