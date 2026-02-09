@@ -70,8 +70,12 @@ def PHLEX_REGISTER_ALGORITHMS(m, config):
         )
 
     # now reduce them pair-wise
-    m.transform(add_sum01, name="reduce01", input_family=["sum0", "sum1"], output_products=["sum01"])
-    m.transform(add_sum23, name="reduce23", input_family=["sum2", "sum3"], output_products=["sum23"])
+    m.transform(
+        add_sum01, name="reduce01", input_family=["sum0", "sum1"], output_products=["sum01"]
+    )
+    m.transform(
+        add_sum23, name="reduce23", input_family=["sum2", "sum3"], output_products=["sum23"]
+    )
 
     # once more (and the configuration will add a verifier)
     m.transform(add_final, name="reduce", input_family=["sum01", "sum23"], output_products=["sum"])
