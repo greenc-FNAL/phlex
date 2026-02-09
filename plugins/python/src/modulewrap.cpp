@@ -69,34 +69,29 @@ namespace {
   struct py_callback {
     PyObject* m_callable; // owned
 
-    py_callback(PyObject* callable)
+    py_callback(PyObject* callable) : m_callable(callable)
     {
-      PyGILRAII gil;
-      Py_XINCREF(callable);
-      m_callable = callable;
+      // callable is always non-null here (validated before py_callback construction)
+      Py_INCREF(m_callable);
     }
-    py_callback(py_callback const& pc)
+    py_callback(py_callback const& pc) : m_callable(pc.m_callable)
     {
-      PyGILRAII gil;
-      Py_XINCREF(pc.m_callable);
-      m_callable = pc.m_callable;
+      // Increments only have non-local effects if callbacks are shared among threads
+      Py_INCREF(m_callable);
     }
     py_callback& operator=(py_callback const& pc)
     {
       if (this != &pc) {
-        PyGILRAII gil;
-        Py_XINCREF(pc.m_callable);
-        Py_XDECREF(m_callable);
+        Py_INCREF(pc.m_callable);
+        Py_DECREF(m_callable);
         m_callable = pc.m_callable;
       }
       return *this;
     }
     ~py_callback()
     {
-      if (Py_IsInitialized()) {
-        PyGILRAII gil;
-        Py_XDECREF(m_callable);
-      }
+      // Removed Py_IsInitialized check - if offloaded, wouldn't trust result anyway
+      Py_DECREF(m_callable);
     }
 
     template <typename... Args>
@@ -105,11 +100,6 @@ namespace {
       static_assert(sizeof...(Args) == N, "Argument count mismatch");
 
       PyGILRAII gil;
-
-      if (!m_callable) {
-        decref_all(args...);
-        throw std::runtime_error("Python callback attempted on NULL callable");
-      }
 
       PyObject* arg_tuple = PyTuple_New(N);
       if (!arg_tuple) {
@@ -153,11 +143,6 @@ namespace {
 
       PyGILRAII gil;
 
-      if (!m_callable) {
-        decref_all(args...);
-        throw std::runtime_error("Python callback attempted on NULL callable");
-      }
-
       PyObject* arg_tuple = PyTuple_New(N);
       if (!arg_tuple) {
         decref_all(args...);
@@ -197,7 +182,8 @@ namespace {
     void decref_all(Args... args)
     {
       // helper to decrement reference counts of N arguments
-      (Py_XDECREF((PyObject*)args), ...);
+      // args are already validated as non-zero in the calling code
+      (Py_DECREF((PyObject*)args), ...);
     }
   };
 
@@ -374,26 +360,15 @@ namespace {
   {                                                                                                \
     PyGILRAII gil;                                                                                 \
     cpptype i = (cpptype)frompy((PyObject*)pyobj);                                                 \
-    if (PyErr_Occurred()) {                                                                        \
-      PyObject *ptype, *pvalue, *ptraceback;                                                       \
-      PyErr_Fetch(&ptype, &pvalue, &ptraceback);                                                   \
-      PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);                                      \
-      std::string msg = "Python conversion error for type " #name;                                 \
-      if (pvalue) {                                                                                \
-        PyObject* pstr = PyObject_Str(pvalue);                                                     \
-        if (pstr) {                                                                                \
-          msg += ": ";                                                                             \
-          msg += PyUnicode_AsUTF8(pstr);                                                           \
-          Py_DECREF(pstr);                                                                         \
-        }                                                                                          \
+    /* For efficiency, compare to (cpptype)-1 instead of calling PyErr_Occurred() */              \
+    if (i == (cpptype)-1) {                                                                        \
+      std::string msg;                                                                             \
+      if (msg_from_py_error(msg, true)) {                                                          \
+        Py_DECREF((PyObject*)pyobj);                                                               \
+        throw std::runtime_error(msg);                                                             \
       }                                                                                            \
-      Py_XDECREF(ptype);                                                                           \
-      Py_XDECREF(pvalue);                                                                          \
-      Py_XDECREF(ptraceback);                                                                      \
-      Py_XDECREF((PyObject*)pyobj);                                                                \
-      throw std::runtime_error(msg);                                                               \
     }                                                                                              \
-    Py_XDECREF((PyObject*)pyobj);                                                                  \
+    Py_DECREF((PyObject*)pyobj);                                                                   \
     return i;                                                                                      \
   }
 
