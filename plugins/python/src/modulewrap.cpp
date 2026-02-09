@@ -458,240 +458,12 @@ namespace {
     return vec;                                                                                    \
   }
 
-  static std::shared_ptr<std::vector<int>> py_to_vint(intptr_t pyobj)
-  {
-    PyGILRAII gil;
-    auto vec = std::make_shared<std::vector<int>>();
-    PyObject* obj = (PyObject*)pyobj;
-
-    if (obj) {
-      if (PyList_Check(obj)) {
-        size_t size = PyList_Size(obj);
-        vec->reserve(size);
-        for (size_t i = 0; i < size; ++i) {
-          PyObject* item = PyList_GetItem(obj, i);
-          if (!item) {
-            PyErr_Print();
-            break;
-          }
-          long val = PyLong_AsLong(item);
-          if (PyErr_Occurred()) {
-            PyErr_Print();
-            break;
-          }
-          vec->push_back((int)val);
-        }
-      } else if (PyArray_Check(obj)) {
-        PyArrayObject* arr = (PyArrayObject*)obj;
-        npy_intp* dims = PyArray_DIMS(arr);
-        int nd = PyArray_NDIM(arr);
-        size_t total = 1;
-        for (int i = 0; i < nd; ++i)
-          total *= static_cast<size_t>(dims[i]);
-
-        int* raw = static_cast<int*>(PyArray_DATA(arr));
-        vec->reserve(total);
-        vec->insert(vec->end(), raw, raw + total);
-      }
-      Py_DECREF(obj);
-    }
-    return vec;
-  }
-  static std::shared_ptr<std::vector<unsigned int>> py_to_vuint(intptr_t pyobj)
-  {
-    PyGILRAII gil;
-    auto vec = std::make_shared<std::vector<unsigned int>>();
-    PyObject* obj = (PyObject*)pyobj;
-
-    if (obj) {
-      if (PyList_Check(obj)) {
-        size_t size = PyList_Size(obj);
-        vec->reserve(size);
-        for (size_t i = 0; i < size; ++i) {
-          PyObject* item = PyList_GetItem(obj, i);
-          if (!item) {
-            PyErr_Print();
-            break;
-          }
-          unsigned long val = PyLong_AsUnsignedLong(item);
-          if (PyErr_Occurred()) {
-            PyErr_Print();
-            break;
-          }
-          vec->push_back((unsigned int)val);
-        }
-      } else if (PyArray_Check(obj)) {
-        PyArrayObject* arr = (PyArrayObject*)obj;
-        npy_intp* dims = PyArray_DIMS(arr);
-        int nd = PyArray_NDIM(arr);
-        size_t total = 1;
-        for (int i = 0; i < nd; ++i)
-          total *= static_cast<size_t>(dims[i]);
-
-        unsigned int* raw = static_cast<unsigned int*>(PyArray_DATA(arr));
-        vec->reserve(total);
-        vec->insert(vec->end(), raw, raw + total);
-      }
-      Py_DECREF(obj);
-    }
-    return vec;
-  }
-  static std::shared_ptr<std::vector<long>> py_to_vlong(intptr_t pyobj)
-  {
-    PyGILRAII gil;
-    auto vec = std::make_shared<std::vector<long>>();
-    PyObject* obj = (PyObject*)pyobj;
-
-    if (obj) {
-      if (PyList_Check(obj)) {
-        size_t size = PyList_Size(obj);
-        vec->reserve(size);
-        for (size_t i = 0; i < size; ++i) {
-          PyObject* item = PyList_GetItem(obj, i);
-          if (!item) {
-            PyErr_Print();
-            break;
-          }
-          long val = PyLong_AsLong(item);
-          if (PyErr_Occurred()) {
-            PyErr_Print();
-            break;
-          }
-          vec->push_back(val);
-        }
-      } else if (PyArray_Check(obj)) {
-        PyArrayObject* arr = (PyArrayObject*)obj;
-        npy_intp* dims = PyArray_DIMS(arr);
-        int nd = PyArray_NDIM(arr);
-        size_t total = 1;
-        for (int i = 0; i < nd; ++i)
-          total *= static_cast<size_t>(dims[i]);
-
-        long* raw = static_cast<long*>(PyArray_DATA(arr));
-        vec->reserve(total);
-        vec->insert(vec->end(), raw, raw + total);
-      }
-      Py_DECREF(obj);
-    }
-    return vec;
-  }
-  static std::shared_ptr<std::vector<unsigned long>> py_to_vulong(intptr_t pyobj)
-  {
-    PyGILRAII gil;
-    auto vec = std::make_shared<std::vector<unsigned long>>();
-    PyObject* obj = (PyObject*)pyobj;
-
-    if (obj) {
-      if (PyList_Check(obj)) {
-        size_t size = PyList_Size(obj);
-        vec->reserve(size);
-        for (size_t i = 0; i < size; ++i) {
-          PyObject* item = PyList_GetItem(obj, i);
-          if (!item) {
-            PyErr_Print();
-            break;
-          }
-          unsigned long val = PyLong_AsUnsignedLong(item);
-          if (PyErr_Occurred()) {
-            PyErr_Print();
-            break;
-          }
-          vec->push_back(val);
-        }
-      } else if (PyArray_Check(obj)) {
-        PyArrayObject* arr = (PyArrayObject*)obj;
-        npy_intp* dims = PyArray_DIMS(arr);
-        int nd = PyArray_NDIM(arr);
-        size_t total = 1;
-        for (int i = 0; i < nd; ++i)
-          total *= static_cast<size_t>(dims[i]);
-
-        unsigned long* raw = static_cast<unsigned long*>(PyArray_DATA(arr));
-        vec->reserve(total);
-        vec->insert(vec->end(), raw, raw + total);
-      }
-      Py_DECREF(obj);
-    }
-    return vec;
-  }
-  static std::shared_ptr<std::vector<float>> py_to_vfloat(intptr_t pyobj)
-  {
-    PyGILRAII gil;
-    auto vec = std::make_shared<std::vector<float>>();
-    PyObject* obj = (PyObject*)pyobj;
-
-    if (obj) {
-      if (PyList_Check(obj)) {
-        size_t size = PyList_Size(obj);
-        vec->reserve(size);
-        for (size_t i = 0; i < size; ++i) {
-          PyObject* item = PyList_GetItem(obj, i);
-          if (!item) {
-            PyErr_Print();
-            break;
-          }
-          double val = PyFloat_AsDouble(item);
-          if (PyErr_Occurred()) {
-            PyErr_Print();
-            break;
-          }
-          vec->push_back((float)val);
-        }
-      } else if (PyArray_Check(obj)) {
-        PyArrayObject* arr = (PyArrayObject*)obj;
-        npy_intp* dims = PyArray_DIMS(arr);
-        int nd = PyArray_NDIM(arr);
-        size_t total = 1;
-        for (int i = 0; i < nd; ++i)
-          total *= static_cast<size_t>(dims[i]);
-
-        float* raw = static_cast<float*>(PyArray_DATA(arr));
-        vec->reserve(total);
-        vec->insert(vec->end(), raw, raw + total);
-      }
-      Py_DECREF(obj);
-    }
-    return vec;
-  }
-  static std::shared_ptr<std::vector<double>> py_to_vdouble(intptr_t pyobj)
-  {
-    PyGILRAII gil;
-    auto vec = std::make_shared<std::vector<double>>();
-    PyObject* obj = (PyObject*)pyobj;
-
-    if (obj) {
-      if (PyList_Check(obj)) {
-        size_t size = PyList_Size(obj);
-        vec->reserve(size);
-        for (size_t i = 0; i < size; ++i) {
-          PyObject* item = PyList_GetItem(obj, i);
-          if (!item) {
-            PyErr_Print();
-            break;
-          }
-          double val = PyFloat_AsDouble(item);
-          if (PyErr_Occurred()) {
-            PyErr_Print();
-            break;
-          }
-          vec->push_back(val);
-        }
-      } else if (PyArray_Check(obj)) {
-        PyArrayObject* arr = (PyArrayObject*)obj;
-        npy_intp* dims = PyArray_DIMS(arr);
-        int nd = PyArray_NDIM(arr);
-        size_t total = 1;
-        for (int i = 0; i < nd; ++i)
-          total *= static_cast<size_t>(dims[i]);
-
-        double* raw = static_cast<double*>(PyArray_DATA(arr));
-        vec->reserve(total);
-        vec->insert(vec->end(), raw, raw + total);
-      }
-      Py_DECREF(obj);
-    }
-    return vec;
-  }
+  NUMPY_ARRAY_CONVERTER(vint, int, NPY_INT)
+  NUMPY_ARRAY_CONVERTER(vuint, unsigned int, NPY_UINT)
+  NUMPY_ARRAY_CONVERTER(vlong, long, NPY_LONG)
+  NUMPY_ARRAY_CONVERTER(vulong, unsigned long, NPY_ULONG)
+  NUMPY_ARRAY_CONVERTER(vfloat, float, NPY_FLOAT)
+  NUMPY_ARRAY_CONVERTER(vdouble, double, NPY_DOUBLE)
 
 } // unnamed namespace
 
@@ -753,8 +525,13 @@ static PyObject* parse_args(PyObject* args,
     return nullptr;
   }
 
-  if (!PySequence_Check(input) || (output && !PySequence_Check(output))) {
-    PyErr_SetString(PyExc_TypeError, "input and output need to be sequences");
+  if (!input || (!PyList_Check(input) && !PyTuple_Check(input))) {
+    PyErr_SetString(PyExc_TypeError, "input must be a list or tuple");
+    return nullptr;
+  }
+
+  if (output && !PyList_Check(output) && !PyTuple_Check(output)) {
+    PyErr_SetString(PyExc_TypeError, "output must be a list or tuple");
     return nullptr;
   }
 
@@ -787,12 +564,23 @@ static PyObject* parse_args(PyObject* args,
     if (ret)
       output_types.push_back(annotation_as_text(ret));
 
-    Py_ssize_t pos = 0;
-    PyObject *key, *value;
-    while (PyDict_Next(annot, &pos, &key, &value)) {
-      if (PyUnicode_Check(key) && PyUnicode_CompareWithASCIIString(key, "return") == 0)
-        continue;
-      input_types.push_back(annotation_as_text(value));
+    // Match annotation types to input labels by name lookup rather than assuming order
+    for (auto const& label : input_labels) {
+      PyObject* key = PyUnicode_FromString(label.c_str());
+      if (!key) {
+        Py_XDECREF(annot);
+        return nullptr;
+      }
+      PyObject* value = PyDict_GetItem(annot, key);
+      Py_DECREF(key);
+      if (value) {
+        input_types.push_back(annotation_as_text(value));
+      } else {
+        // Missing annotation for this input label
+        PyErr_Format(PyExc_TypeError, "no type annotation found for input '%s'", label.c_str());
+        Py_XDECREF(annot);
+        return nullptr;
+      }
     }
   }
   Py_XDECREF(annot);
