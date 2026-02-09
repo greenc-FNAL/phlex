@@ -46,7 +46,7 @@ class Verifier:
 
         Raises:
             AssertionError: if the provided value does not matches the
-                pre-registed value.
+                pre-registered value.
 
         Returns:
             None
@@ -80,7 +80,7 @@ class VerifierSumIjk:
 
         Raises:
             AssertionError: if the provided value does not matches the
-                pre-registed value.
+                pre-registered value.
 
         Returns:
             None
