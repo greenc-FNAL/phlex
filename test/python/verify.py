@@ -121,7 +121,7 @@ def PHLEX_REGISTER_ALGORITHMS(m, config):
         v = BoolVerifier(expected)
         m.observe(v, input_family=config["input"])
         return
-    except Exception:
+    except KeyError:
         pass
 
     # Check if this is for sum_ijk (from callback3 test)
