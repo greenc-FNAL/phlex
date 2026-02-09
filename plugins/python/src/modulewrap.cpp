@@ -532,12 +532,12 @@ static PyObject* parse_args(PyObject* args,
   }
 
   if (!PyList_Check(input) && !PyTuple_Check(input)) {
-    PyErr_SetString(PyExc_TypeError, "input must be a list or tuple");
+    PyErr_SetString(PyExc_TypeError, "input parameter must be a list or tuple");
     return nullptr;
   }
 
   if (output && !PyList_Check(output) && !PyTuple_Check(output)) {
-    PyErr_SetString(PyExc_TypeError, "output must be a list or tuple");
+    PyErr_SetString(PyExc_TypeError, "output parameter must be a list or tuple");
     return nullptr;
   }
 
@@ -573,9 +573,12 @@ static PyObject* parse_args(PyObject* args,
     // Match annotation types to input labels by name lookup rather than assuming order
     for (auto const& label : input_labels) {
       PyObject* value = PyDict_GetItemString(annot, label.c_str());
-      if (value) {
-        input_types.push_back(annotation_as_text(value));
-      } else {
+      if (!value) {
+        // Check if there was an actual error vs just a missing key
+        if (PyErr_Occurred()) {
+          Py_DECREF(annot);
+          return nullptr;
+        }
         // Missing annotation for this input label
         PyErr_Format(PyExc_TypeError,
                      "Missing type annotation for parameter '%s' - all parameters must be annotated",
@@ -583,6 +586,7 @@ static PyObject* parse_args(PyObject* args,
         Py_DECREF(annot);
         return nullptr;
       }
+      input_types.push_back(annotation_as_text(value));
     }
   }
   Py_XDECREF(annot);
