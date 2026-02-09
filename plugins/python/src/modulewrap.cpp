@@ -94,9 +94,13 @@ namespace {
     }
     ~py_callback()
     {
-      // Must hold GIL when calling Py_DECREF
-      PyGILRAII gil;
-      Py_DECREF(m_callable);
+      // Check if Python is still initialized before attempting cleanup
+      // While this check may not be reliable in all threading scenarios (e.g., offloaded threads),
+      // it prevents crashes during normal interpreter shutdown
+      if (Py_IsInitialized()) {
+        PyGILRAII gil;
+        Py_DECREF(m_callable);
+      }
     }
 
     template <typename... Args>
@@ -568,13 +572,7 @@ static PyObject* parse_args(PyObject* args,
 
     // Match annotation types to input labels by name lookup rather than assuming order
     for (auto const& label : input_labels) {
-      PyObject* key = PyUnicode_FromString(label.c_str());
-      if (!key) {
-        Py_DECREF(annot);
-        return nullptr;
-      }
-      PyObject* value = PyDict_GetItem(annot, key);
-      Py_DECREF(key);
+      PyObject* value = PyDict_GetItemString(annot, label.c_str());
       if (value) {
         input_types.push_back(annotation_as_text(value));
       } else {
