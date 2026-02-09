@@ -32,8 +32,12 @@ def bad_uint(i: int) -> "unsigned int":  # type: ignore # noqa: F722
 
 
 # Function with mismatching annotation count vs config inputs
-def two_args(i: int, j: int, k: int) -> int:
-    """Sum only the first two of three integers (tests parameter count mismatch)."""
+def two_args(i: int, j: int, k: int) -> int:  # noqa: ARG001
+    """Sum only the first two of three integers (tests parameter count mismatch).
+    
+    Note: Parameter k is intentionally unused - this tests that the function
+    accepts 3 parameters to match input_family but doesn't use all of them.
+    """
     return i + j
 
 
