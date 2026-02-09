@@ -580,9 +580,10 @@ static PyObject* parse_args(PyObject* args,
           return nullptr;
         }
         // Missing annotation for this input label
-        PyErr_Format(PyExc_TypeError,
-                     "Missing type annotation for parameter '%s' - all parameters must be annotated",
-                     label.c_str());
+        PyErr_Format(
+          PyExc_TypeError,
+          "Missing type annotation for parameter '%s' - all parameters must be annotated",
+          label.c_str());
         Py_DECREF(annot);
         return nullptr;
       }
