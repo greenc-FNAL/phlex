@@ -37,7 +37,7 @@ class Verifier:
         self._sum_total = sum_total
 
     def __call__(self, sum: int) -> None:
-        """Verify a the `sum`.
+        """Verify the `sum`.
 
         Check that `sum` matches the pre-registered value.
 
@@ -45,7 +45,7 @@ class Verifier:
             sum (int): The value to verify.
 
         Raises:
-            AssertionError: if the provided value does not matches the
+            AssertionError: if the provided value does not match the
                 pre-registered value.
 
         Returns:
@@ -71,7 +71,7 @@ class VerifierSumIjk:
         self._sum_total = sum_total
 
     def __call__(self, sum_ijk: int) -> None:
-        """Verify a the `sum_ijk`.
+        """Verify the `sum_ijk`.
 
         Check that `sum_ijk` matches the pre-registered value.
 
@@ -79,7 +79,7 @@ class VerifierSumIjk:
             sum_ijk (int): The value to verify.
 
         Raises:
-            AssertionError: if the provided value does not matches the
+            AssertionError: if the provided value does not match the
                 pre-registered value.
 
         Returns:

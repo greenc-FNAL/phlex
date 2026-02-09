@@ -31,11 +31,11 @@ def add_double(d1: double, d2: double) -> double:
     """Add two doubles.
 
     Args:
-        d1 (float): First input.
-        d2 (float): Second input.
+        d1 (double): First input.
+        d2 (double): Second input.
 
     Returns:
-        float: Sum of the two inputs.
+        double: Sum of the two inputs.
     """
     return double(d1 + d2)
 
@@ -44,11 +44,11 @@ def add_unsigned(u1: "unsigned int", u2: "unsigned int") -> "unsigned int":  # t
     """Add two unsigned integers.
 
     Args:
-        u1 (int): First input.
-        u2 (int): Second input.
+        u1 (unsigned int): First input.
+        u2 (unsigned int): Second input.
 
     Returns:
-        int: Sum of the two inputs.
+        unsigned int: Sum of the two inputs.
     """
     return u1 + u2
 
@@ -70,8 +70,8 @@ def collect_double(d1: double, d2: double) -> npt.NDArray[np.float64]:
     """Combine doubles into a numpy array.
 
     Args:
-        d1 (float): First input.
-        d2 (float): Second input.
+        d1 (double): First input.
+        d2 (double): Second input.
 
     Returns:
         ndarray: Array of doubles.
