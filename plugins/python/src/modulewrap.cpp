@@ -527,7 +527,7 @@ static PyObject* parse_args(PyObject* args,
     return nullptr;
   }
 
-  if (!input || (!PyList_Check(input) && !PyTuple_Check(input))) {
+  if (!PyList_Check(input) && !PyTuple_Check(input)) {
     PyErr_SetString(PyExc_TypeError, "input must be a list or tuple");
     return nullptr;
   }
@@ -570,7 +570,7 @@ static PyObject* parse_args(PyObject* args,
     for (auto const& label : input_labels) {
       PyObject* key = PyUnicode_FromString(label.c_str());
       if (!key) {
-        Py_XDECREF(annot);
+        Py_DECREF(annot);
         return nullptr;
       }
       PyObject* value = PyDict_GetItem(annot, key);
@@ -582,7 +582,7 @@ static PyObject* parse_args(PyObject* args,
         PyErr_Format(PyExc_TypeError,
                      "Missing type annotation for parameter '%s' - all parameters must be annotated",
                      label.c_str());
-        Py_XDECREF(annot);
+        Py_DECREF(annot);
         return nullptr;
       }
     }
