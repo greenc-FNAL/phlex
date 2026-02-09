@@ -72,16 +72,20 @@ namespace {
     py_callback(PyObject* callable) : m_callable(callable)
     {
       // callable is always non-null here (validated before py_callback construction)
+      PyGILRAII gil;
       Py_INCREF(m_callable);
     }
     py_callback(py_callback const& pc) : m_callable(pc.m_callable)
     {
-      // Increments only have non-local effects if callbacks are shared among threads
+      // Must hold GIL when manipulating reference counts
+      PyGILRAII gil;
       Py_INCREF(m_callable);
     }
     py_callback& operator=(py_callback const& pc)
     {
       if (this != &pc) {
+        // Must hold GIL when manipulating reference counts
+        PyGILRAII gil;
         Py_INCREF(pc.m_callable);
         Py_DECREF(m_callable);
         m_callable = pc.m_callable;
@@ -90,7 +94,8 @@ namespace {
     }
     ~py_callback()
     {
-      // Removed Py_IsInitialized check - if offloaded, wouldn't trust result anyway
+      // Must hold GIL when calling Py_DECREF
+      PyGILRAII gil;
       Py_DECREF(m_callable);
     }
 
@@ -360,13 +365,10 @@ namespace {
   {                                                                                                \
     PyGILRAII gil;                                                                                 \
     cpptype i = (cpptype)frompy((PyObject*)pyobj);                                                 \
-    /* For efficiency, compare to (cpptype)-1 instead of calling PyErr_Occurred() */              \
-    if (i == (cpptype)-1) {                                                                        \
-      std::string msg;                                                                             \
-      if (msg_from_py_error(msg, true)) {                                                          \
-        Py_DECREF((PyObject*)pyobj);                                                               \
-        throw std::runtime_error(msg);                                                             \
-      }                                                                                            \
+    std::string msg;                                                                               \
+    if (msg_from_py_error(msg, true)) {                                                            \
+      Py_DECREF((PyObject*)pyobj);                                                                 \
+      throw std::runtime_error(msg);                                                               \
     }                                                                                              \
     Py_DECREF((PyObject*)pyobj);                                                                   \
     return i;                                                                                      \
@@ -577,7 +579,9 @@ static PyObject* parse_args(PyObject* args,
         input_types.push_back(annotation_as_text(value));
       } else {
         // Missing annotation for this input label
-        PyErr_Format(PyExc_TypeError, "no type annotation found for input '%s'", label.c_str());
+        PyErr_Format(PyExc_TypeError,
+                     "Missing type annotation for parameter '%s' - all parameters must be annotated",
+                     label.c_str());
         Py_XDECREF(annot);
         return nullptr;
       }
