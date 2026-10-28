@@ -8,7 +8,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-class double(float):  # noqa: N801
+class double(float):
     """Dummy class for C++ double type."""
 
     pass
@@ -40,7 +40,10 @@ def add_double(d1: double, d2: double) -> double:
     return double(d1 + d2)
 
 
-def add_unsigned(u1: "unsigned int", u2: "unsigned int") -> "unsigned int":  # type: ignore  # noqa: F722
+def add_unsigned(
+    u1: "unsigned int",  # type: ignore[valid-type]  # noqa: F722
+    u2: "unsigned int",  # type: ignore[valid-type]  # noqa: F722
+) -> "unsigned int":  # type: ignore  # noqa: F722
     """Add two unsigned integers.
 
     Args:

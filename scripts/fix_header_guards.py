@@ -10,7 +10,11 @@ from pathlib import Path
 
 
 def normalize_guard_component(component: str) -> str:
-    """Convert a path component to a non-reserved macro identifier token."""
+    """Convert a path component to a non-reserved macro identifier token.
+
+    Returns:
+        The normalized preprocessor identifier component.
+    """
     normalized = re.sub(r"[^A-Z0-9_]", "_", component.upper())
     normalized = re.sub(r"_+", "_", normalized)
     if not normalized or not normalized[0].isalpha():
@@ -19,7 +23,11 @@ def normalize_guard_component(component: str) -> str:
 
 
 def compute_expected_guard(file_path: Path, root: Path) -> str:
-    """Compute expected guard macro: X_Y_HEADER_EXT."""
+    """Compute expected guard macro: X_Y_HEADER_EXT.
+
+    Returns:
+        The expected header guard macro name.
+    """
     rel = file_path.relative_to(root)
     # Include directory components only; a top-level header has none.
     parts = [normalize_guard_component(part) for part in rel.parts[:-1]]
@@ -28,7 +36,11 @@ def compute_expected_guard(file_path: Path, root: Path) -> str:
 
 
 def check_header_guard(file_path: Path, root: Path) -> tuple[bool, str | None]:
-    """Check if header guard is correct. Returns (is_valid, expected_guard)."""
+    """Check if header guard is correct.
+
+    Returns:
+        A pair containing validity and the expected guard when invalid.
+    """
     content = file_path.read_text(encoding="utf-8")
     lines = content.splitlines(keepends=True)
 
@@ -64,7 +76,11 @@ def check_header_guard(file_path: Path, root: Path) -> tuple[bool, str | None]:
 
 
 def fix_header_guard(file_path: Path, root: Path) -> bool:
-    """Fix header guard. Returns True if modified."""
+    """Fix header guard.
+
+    Returns:
+        Whether the file was modified.
+    """
     content = file_path.read_text(encoding="utf-8")
     lines = content.splitlines(keepends=True)
 
