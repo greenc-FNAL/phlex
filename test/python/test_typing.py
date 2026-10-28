@@ -3,7 +3,7 @@
 
 import ctypes
 import typing
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import numpy as np
 import numpy.typing as npt
@@ -11,6 +11,8 @@ from phlex._typing import _C2C
 from pytest import raises
 
 from phlex import Variant, count_optional_arguments, normalize_type
+
+foo: Any
 
 
 class TestTYPING:
@@ -44,14 +46,14 @@ class TestTYPING:
             for t in types + [np_type]:
                 assert normalize_type(norm) == norm
                 try:
-                    assert normalize_type(List[t]) == norm
+                    assert normalize_type(List[t]) == norm  # type: ignore[valid-type]
                 except SyntaxError as e:
                     # some of the above are not legal Python when used with List,
                     # but are fine when used with list; just ignore these as they
                     # will not show up in user code
                     if "Forward reference must be an expression" not in str(e):
                         raise
-                assert normalize_type(list[t]) == norm
+                assert normalize_type(list[t]) == norm  # type: ignore[valid-type]
 
     def test_numpy_array_normalization(self):
         """Normalization of standard Numpy typing."""
@@ -68,7 +70,7 @@ class TestTYPING:
             (np.float32, "float"),
             (np.float64, "double"),
         ):
-            assert normalize_type(npt.NDArray[t]) == "ndarray[" + s + "]"
+            assert normalize_type(npt.NDArray[t]) == "ndarray[" + s + "]"  # type: ignore[valid-type]
 
         # ndarray annotations without a concrete dtype must raise TypeError
         raises(TypeError, normalize_type, np.ndarray[typing.Any])
@@ -111,12 +113,23 @@ class TestTYPING:
         assert count_optional_arguments(None) == 0
 
         # proper cases
-        def a0(): pass
-        def a1o0(a0): pass
-        def a1o1(a0=1): pass
-        def a2o0(a0, a1): pass
-        def a2o1(a0, a1=1): pass
-        def a2o2(a0=0, a1=1): pass
+        def a0():
+            pass
+
+        def a1o0(a0):
+            pass
+
+        def a1o1(a0=1):
+            pass
+
+        def a2o0(a0, a1):
+            pass
+
+        def a2o1(a0, a1=1):
+            pass
+
+        def a2o2(a0=0, a1=1):
+            pass
 
         assert count_optional_arguments(a0) == 0
         assert count_optional_arguments(a1o0) == 0

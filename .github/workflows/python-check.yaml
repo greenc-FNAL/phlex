@@ -106,7 +106,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           uv tool install ruff==0.16.0
-          uv tool install mypy==2.3.0 --with types-PyYAML
+          uv tool install mypy==2.3.0 --with numpy --with pytest --with types-PyYAML
 
       - name: Run ruff check
         id: ruff
@@ -133,7 +133,13 @@ jobs:
         working-directory: ${{ needs.setup.outputs.checkout_path }}
         run: |
           echo "➡️ Checking Python code with MyPy..."
-          mypy --color-output .
+          mypy --color-output \
+            scripts \
+            ci \
+            plugins/python/python \
+            test/python \
+            .devcontainer/configure-host.py \
+            docs/source/conf.py
         continue-on-error: true
 
       - name: Evaluate Python checks result
