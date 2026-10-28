@@ -103,7 +103,7 @@ jobs:
         uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
 
       - name: Install Python dependencies
-        run: uv tool install ruff
+        run: uv tool install ruff==0.16.0
 
       - name: Run ruff format and fix
         working-directory: ${{ needs.setup.outputs.checkout_path }}

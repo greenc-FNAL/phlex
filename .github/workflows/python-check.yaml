@@ -59,13 +59,17 @@ jobs:
         id: setup
         uses: Framework-R-D/action-workflow-setup@f73307dd8c13cb66c2565c9ace32571517b1cea8 # v1
         with:
-          file-type: |
-            python
-            yaml
           include-globs: |
-            scripts/**
-            ci/**
-            .devcontainer/**
+            scripts/**/*.py
+            ci/**/*.py
+            .devcontainer/**/*.py
+            plugins/python/python/**/*.py
+            test/python/**/*.py
+            docs/source/conf.py
+            pyproject.toml
+            .pre-commit-config.yaml
+            .github/workflows/**/*.yaml
+            .github/workflows/**/*.yml
           head-ref: ${{ inputs.pr-head-sha }}
           ref: ${{ inputs.ref }}
           repo: ${{ inputs.repo }}
@@ -100,7 +104,9 @@ jobs:
         uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
 
       - name: Install Python dependencies
-        run: uv tool install ruff && uv tool install mypy --with types-PyYAML
+        run: |
+          uv tool install ruff==0.16.0
+          uv tool install mypy==2.3.0 --with types-PyYAML
 
       - name: Run ruff check
         id: ruff
@@ -109,7 +115,17 @@ jobs:
           FORCE_COLOR: 1
         run: |
           echo "➡️ Checking Python code with ruff..."
-          ruff check
+          ruff check .
+        continue-on-error: true
+
+      - name: Run ruff format check
+        id: ruff_format
+        working-directory: ${{ needs.setup.outputs.checkout_path }}
+        env:
+          FORCE_COLOR: 1
+        run: |
+          echo "➡️ Checking Python formatting with ruff..."
+          ruff format --check .
         continue-on-error: true
 
       - name: Run MyPy check
@@ -121,13 +137,20 @@ jobs:
         continue-on-error: true
 
       - name: Evaluate Python checks result
-        if: always() && (steps.ruff.outcome != 'skipped' || steps.mypy.outcome != 'skipped')
+        if: >
+          always() && (
+            steps.ruff.outcome != 'skipped' ||
+            steps.ruff_format.outcome != 'skipped' ||
+            steps.mypy.outcome != 'skipped'
+          )
         env:
           REPO: ${{ needs.setup.outputs.repo }}
         # yamllint disable rule:line-length
         run: |
           REPO_NAME="${REPO##*/}"
-          if [ "${{ steps.ruff.outcome }}" = 'success' ] && [ "${{ steps.mypy.outcome }}" = 'success' ]; then
+          if [ "${{ steps.ruff.outcome }}" = 'success' ] && \
+             [ "${{ steps.ruff_format.outcome }}" = 'success' ] && \
+             [ "${{ steps.mypy.outcome }}" = 'success' ]; then
             echo "✅ Python checks passed."
           else
             echo "::error::Python checks failed. Comment '@${REPO_NAME}bot python-fix' on the PR to attempt auto-fix."
